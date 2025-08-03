@@ -29,7 +29,10 @@ import { IPaginatedResponse } from '../utils/types/pagination-options';
 import { ApiResponseDto, PaginatedResponseDto, ErrorResponseDto } from '../common/dto/api-response.dto';
 
 @ApiTags('Users')
-@Controller('users')
+@Controller({
+    path: 'users',
+    version: '1',
+})
 export class UserController {
     constructor(private readonly userService: UserService) { }
 
@@ -106,7 +109,7 @@ export class UserController {
 
     @Get()
     @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
+    @ApiBearerAuth('JWT-auth')
     @ApiOperation({
         summary: 'Lấy danh sách người dùng với pagination',
         description: 'Lấy danh sách người dùng với phân trang, lọc và sắp xếp',
@@ -135,7 +138,7 @@ export class UserController {
 
     @Get('all')
     @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
+    @ApiBearerAuth('JWT-auth')
     @ApiOperation({
         summary: 'Lấy tất cả người dùng (không phân trang)',
         description: 'Lấy danh sách tất cả người dùng trong hệ thống',
@@ -157,7 +160,7 @@ export class UserController {
 
     @Get('search')
     @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
+    @ApiBearerAuth('JWT-auth')
     @ApiOperation({
         summary: 'Tìm kiếm người dùng',
         description: 'Tìm kiếm người dùng theo email hoặc username',
@@ -185,7 +188,7 @@ export class UserController {
 
     @Get('stats')
     @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
+    @ApiBearerAuth('JWT-auth')
     @ApiOperation({
         summary: 'Thống kê người dùng',
         description: 'Lấy thống kê tổng quan về người dùng trong hệ thống',
@@ -207,7 +210,7 @@ export class UserController {
 
     @Get('online')
     @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
+    @ApiBearerAuth('JWT-auth')
     @ApiOperation({
         summary: 'Lấy danh sách người dùng đang online',
         description: 'Lấy danh sách tất cả người dùng đang online',
@@ -229,7 +232,7 @@ export class UserController {
 
     @Get(':id')
     @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
+    @ApiBearerAuth('JWT-auth')
     @ApiOperation({
         summary: 'Lấy thông tin người dùng theo ID',
         description: 'Lấy thông tin chi tiết của người dùng theo ID',
@@ -261,7 +264,7 @@ export class UserController {
 
     @Patch(':id')
     @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
+    @ApiBearerAuth('JWT-auth')
     @ApiOperation({
         summary: 'Cập nhật thông tin người dùng',
         description: 'Cập nhật thông tin người dùng theo ID',
@@ -312,7 +315,7 @@ export class UserController {
 
     @Delete(':id')
     @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
+    @ApiBearerAuth('JWT-auth')
     @ApiOperation({
         summary: 'Xóa người dùng',
         description: 'Xóa người dùng theo ID',

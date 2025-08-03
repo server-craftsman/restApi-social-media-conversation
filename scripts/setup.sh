@@ -143,7 +143,7 @@ main() {
     print_success "Setup completed successfully!"
     echo "=========================================="
     echo ""
-    echo "🌐 API Documentation: http://localhost:51213/api"
+    echo "🌐 API Documentation: http://localhost:51213/ambatukam"
     echo "🗄️  PostgreSQL: localhost:5432"
     echo "🔴 Redis: localhost:6379"
     echo "📊 pgAdmin: http://localhost:8080 (admin@smartchat.com / admin123)"

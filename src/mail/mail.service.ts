@@ -51,7 +51,6 @@ export class MailService {
       await this.mailerService.sendMail({
         to: mailData.to,
         subject: emailConfirmTitle,
-        text: `${url.toString()} ${emailConfirmTitle}`,
         templatePath,
         context: {
           title: emailConfirmTitle,
@@ -96,7 +95,6 @@ export class MailService {
     await this.mailerService.sendMail({
       to: mailData.to,
       subject: resetPasswordTitle,
-      text: `${url.toString()} ${resetPasswordTitle}`,
       templatePath: path.join(
         process.cwd(),
         'src',
@@ -135,7 +133,6 @@ export class MailService {
     await this.mailerService.sendMail({
       to: mailData.to,
       subject: emailConfirmTitle,
-      text: `${url.toString()} ${emailConfirmTitle}`,
       templatePath: path.join(
         process.cwd(),
         'src',

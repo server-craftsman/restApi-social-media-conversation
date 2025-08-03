@@ -4,7 +4,10 @@ import { AppService } from './app.service';
 import { ApiResponseDto } from './common/dto/api-response.dto';
 
 @ApiTags('Health')
-@Controller()
+@Controller({
+  path: '',
+  version: '1',
+})
 export class AppController {
   constructor(private readonly appService: AppService) { }
 

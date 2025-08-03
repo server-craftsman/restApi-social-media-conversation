@@ -14,14 +14,17 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 import { ApiResponseDto, ErrorResponseDto } from '../common/dto/api-response.dto';
 
 @ApiTags('Authentication')
-@Controller('auth')
+@Controller({
+    path: 'auth',
+    version: '1',
+})
 export class AuthController {
     constructor(
         private readonly authService: AuthService,
         private readonly userService: UserService,
     ) { }
 
-    @Post('register')
+    @Post('email/register')
     @ApiOperation({
         summary: 'Đăng ký người dùng mới',
         description: 'Tạo tài khoản người dùng mới với thông tin chi tiết và gửi email xác thực',
@@ -113,7 +116,7 @@ export class AuthController {
         }
     }
 
-    @Post('login')
+    @Post('email/login')
     @ApiOperation({
         summary: 'Đăng nhập người dùng',
         description: 'Đăng nhập bằng email/username và password, trả về JWT token',
@@ -172,7 +175,7 @@ export class AuthController {
 
     @Post('logout')
     @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
+    @ApiBearerAuth('JWT-auth')
     @ApiOperation({
         summary: 'Đăng xuất người dùng',
         description: 'Đăng xuất và cập nhật trạng thái offline',
@@ -202,9 +205,9 @@ export class AuthController {
         };
     }
 
-    @Get('profile')
+    @Get('me')
     @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
+    @ApiBearerAuth('JWT-auth')
     @ApiOperation({
         summary: 'Lấy thông tin profile người dùng',
         description: 'Lấy thông tin chi tiết của người dùng đang đăng nhập',
@@ -226,7 +229,7 @@ export class AuthController {
 
     @Post('refresh-token')
     @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
+    @ApiBearerAuth('JWT-auth')
     @ApiOperation({
         summary: 'Làm mới JWT token',
         description: 'Tạo JWT token mới cho người dùng',
@@ -246,7 +249,7 @@ export class AuthController {
         };
     }
 
-    @Post('verify-email/:hash')
+    @Post('email/verify-email/:hash')
     @ApiOperation({
         summary: 'Xác thực email',
         description: 'Xác thực email bằng hash từ link trong email',
@@ -294,7 +297,7 @@ export class AuthController {
         };
     }
 
-    @Post('resend-verification')
+    @Post('email/resend-verification')
     @ApiOperation({
         summary: 'Gửi lại email xác thực',
         description: 'Gửi lại email xác thực cho user chưa verify',

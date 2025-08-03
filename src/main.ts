@@ -1,11 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ApiResponseInterceptor } from './common/interceptors/api-response.interceptor';
 import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
-import compression from 'compression';
+const compression = require('compression');
 
 async function bootstrap() {
   try {
@@ -17,6 +17,13 @@ async function bootstrap() {
     if (prefix) {
       app.setGlobalPrefix(prefix);
     }
+
+    // Enable API versioning
+    app.enableVersioning({
+      type: VersioningType.URI,
+      prefix: 'v',
+      defaultVersion: '1',
+    });
 
     // Security middleware
     const helmetEnabled = configService.get('app.security.helmet.enabled');
@@ -41,23 +48,54 @@ async function bootstrap() {
     // CORS configuration
     const allowedOrigins = configService.get('app.allowedOrigins') || [];
     const corsEnabled = configService.get('app.security.cors.enabled');
+    const environment = configService.get('app.environment');
+
+    console.log('CORS Configuration:', {
+      enabled: corsEnabled,
+      environment: environment,
+      allowedOrigins: allowedOrigins,
+    });
 
     if (corsEnabled !== false) {
-      app.enableCors({
-        origin: (origin, callback) => {
-          // Allow requests with no origin (like mobile apps or curl requests)
-          if (!origin) return callback(null, true);
+      // In development, allow all origins for easier testing
+      if (environment === 'development') {
+        app.enableCors({
+          origin: true, // Allow all origins in development
+          credentials: true,
+          methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+          allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+          exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
+        });
+        console.log('🔓 CORS: Development mode - allowing all origins');
+      } else {
+        // In production, use strict origin checking
+        app.enableCors({
+          origin: (origin, callback) => {
+            // Allow requests with no origin (like mobile apps or curl requests)
+            if (!origin) {
+              console.log('CORS: No origin - allowing');
+              return callback(null, true);
+            }
 
-          if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
-          } else {
-            return callback(new Error('Not allowed by CORS'));
-          }
-        },
-        credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-      });
+            console.log('CORS: Checking origin:', origin);
+
+            // Check if origin is in allowed list
+            if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+              console.log('CORS: Origin allowed:', origin);
+              return callback(null, true);
+            } else {
+              console.log('CORS: Origin rejected:', origin);
+              console.log('CORS: Allowed origins:', allowedOrigins);
+              return callback(new Error(`CORS: Origin ${origin} not allowed`), false);
+            }
+          },
+          credentials: true,
+          methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+          allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+          exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
+        });
+        console.log('🔒 CORS: Production mode - using origin whitelist');
+      }
     }
 
     // Swagger configuration
@@ -110,12 +148,13 @@ async function bootstrap() {
         },
         'JWT-auth',
       )
+      .addSecurityRequirements('JWT-auth')
       .addServer('http://localhost:51213', 'Development server')
       .addServer('https://api.smartchat.com', 'Production server')
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api', app, document, {
+    SwaggerModule.setup('ambatukam', app, document, {
       swaggerOptions: {
         persistAuthorization: true,
         filter: true,
@@ -144,7 +183,8 @@ async function bootstrap() {
     console.log('='.repeat(70));
     console.log(`📡 Server Status    : ONLINE & READY`);
     console.log(`🔗 API Endpoint     : http://${host}:${port}`);
-    console.log(`📖 Documentation   : http://${host}:${port}/api`);
+    console.log(`📖 Documentation   : http://${host}:${port}/ambatukam`);
+    console.log(`🎯 API v1 Endpoints : http://${host}:${port}/api/v1`);
     console.log(`⚡ Environment     : ${configService.get('app.environment') || 'development'}`);
     console.log(`🔒 Rate Limiting   : ${configService.get('app.rateLimit.max')} req/${configService.get('app.rateLimit.windowMs') / 1000 / 60}min`);
     console.log(`💾 Redis Cache     : ${configService.get('app.redis.host')}:${configService.get('app.redis.port')}`);
