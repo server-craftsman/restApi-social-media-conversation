@@ -4,8 +4,8 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ApiResponseInterceptor } from './common/interceptors/api-response.interceptor';
 import { ConfigService } from '@nestjs/config';
-import * as helmet from 'helmet';
-import * as compression from 'compression';
+import helmet from 'helmet';
+import compression from 'compression';
 
 async function bootstrap() {
   try {

@@ -27,9 +27,13 @@ import appConfig from './config/app.config';
     // Rate Limiting
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService) => ({
-        ttl: configService.get('app.rateLimit.windowMs'),
-        limit: configService.get('app.rateLimit.max'),
+      useFactory: (configService: ConfigService) => ({
+        throttlers: [
+          {
+            ttl: configService.get('app.rateLimit.windowMs') || 900000,
+            limit: configService.get('app.rateLimit.max') || 100,
+          },
+        ],
       }),
       inject: [ConfigService],
     }),
