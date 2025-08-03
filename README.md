@@ -1,98 +1,765 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# SmartChat - Ứng dụng nhắn tin thời gian thực + AI trợ lý
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## 🎯 Tính năng chính
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+- **Đăng ký / Đăng nhập người dùng** (JWT Token)
+- **Chat real-time 1-1 hoặc nhóm nhỏ** (Socket.IO/WebSocket)
+- **Lưu trữ lịch sử chat** (PostgreSQL với Prisma)
+- **Tích hợp AI ChatBot**:
+  - Chat riêng với chatbot như ChatGPT mini
+  - Gợi ý tự động trả lời, tóm tắt tin nhắn
+  - Kiểm tra chính tả, gợi ý phản hồi
+- **Typing Indicator**, tin nhắn đã xem, ai đang online
+- **Tối ưu cho desktop/mobile**
 
-## Description
+## 📁 Cấu trúc dự án
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
-
-```bash
-$ pnpm install
+```
+smartchat/
+├── src/
+│   ├── auth/                 # Authentication module
+│   │   ├── dto/             # Data Transfer Objects
+│   │   ├── auth.controller.ts
+│   │   ├── auth.service.ts
+│   │   ├── jwt.strategy.ts
+│   │   ├── jwt-auth.guard.ts
+│   │   └── auth.module.ts
+│   ├── user/                # User management module
+│   │   ├── dto/
+│   │   ├── user.controller.ts
+│   │   ├── user.service.ts
+│   │   └── user.module.ts
+│   ├── chat/                # Chat functionality module
+│   │   ├── dto/
+│   │   ├── chat.controller.ts
+│   │   ├── chat.service.ts
+│   │   ├── chat.gateway.ts  # WebSocket gateway
+│   │   └── chat.module.ts
+│   ├── ai-chat/             # AI chat module
+│   │   ├── dto/
+│   │   ├── ai-chat.controller.ts
+│   │   ├── ai-chat.service.ts
+│   │   └── ai-chat.module.ts
+│   ├── prisma/              # Database module
+│   │   ├── prisma.service.ts
+│   │   └── prisma.module.ts
+│   ├── common/              # Shared components
+│   │   └── dto/
+│   ├── app.controller.ts
+│   ├── app.service.ts
+│   ├── app.module.ts
+│   └── main.ts
+├── prisma/
+│   ├── schema.prisma        # Database schema
+│   ├── seed.ts              # Database seeding
+│   └── migrations/          # Database migrations
+├── scripts/                 # Automation scripts
+│   ├── setup-db.sh         # Full database setup
+│   ├── setup-simple.sh     # Simple database setup
+│   ├── migrate-dev.sh      # Development migrations
+│   └── migrate-prod.sh     # Production migrations
+├── docker-compose.dev.yml   # Docker development setup
+├── Dockerfile.dev          # Docker development image
+├── .env                    # Development environment
+├── .env.production         # Production environment
+└── package.json
 ```
 
-## Compile and run the project
+## 🚀 Cài đặt và chạy
+
+### 1. Yêu cầu hệ thống
+
+- **Node.js** (v18 hoặc cao hơn)
+- **pnpm** (hoặc npm/yarn)
+- **PostgreSQL** (v13 hoặc cao hơn)
+- **Docker** (tùy chọn, cho development)
+
+### 2. Clone và cài đặt dependencies
 
 ```bash
-# development
-$ pnpm run start
+# Clone repository
+git clone <repository-url>
+cd smartchat
 
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+# Cài đặt dependencies
+pnpm install
 ```
 
-## Run tests
+### 3. Cấu hình môi trường
+
+#### Tạo file .env
+```bash
+# Development Environment
+NODE_ENV=development
+PORT=51213
+
+# Database URLs
+DATABASE_URL="postgresql://postgres:19102003@localhost:5432/smartchat_db"
+
+# JWT Configuration
+JWT_SECRET="your-super-secret-jwt-key-change-in-production"
+
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=smartchat_db
+DB_USER=postgres
+DB_PASSWORD=19102003
+
+# Logging
+LOG_LEVEL=debug
+```
+
+#### Tạo file .env.production
+```bash
+# Production Environment Configuration
+NODE_ENV=production
+PORT=51213
+
+# Production Database URL
+DATABASE_URL="postgresql://username:password@host:5432/database"
+
+# JWT Configuration
+JWT_SECRET="your-production-jwt-secret-key-change-this"
+
+# Database Configuration
+DB_HOST=your-production-host
+DB_PORT=5432
+DB_NAME=your-production-database
+DB_USER=your-production-user
+DB_PASSWORD=your-production-password
+
+# Logging
+LOG_LEVEL=info
+
+# Security
+CORS_ORIGIN=https://your-frontend-domain.com
+```
+
+### 4. Cài đặt và cấu hình PostgreSQL
+
+#### Option A: Docker (Khuyến nghị)
 
 ```bash
-# unit tests
-$ pnpm run test
+# Cài đặt Docker Desktop
+# Tải từ: https://www.docker.com/products/docker-desktop/
 
-# e2e tests
-$ pnpm run test:e2e
+# Khởi động PostgreSQL với Docker
+docker-compose -f docker-compose.dev.yml up -d postgres
 
-# test coverage
-$ pnpm run test:cov
+# Kiểm tra container
+docker ps
 ```
 
-## Deployment
+#### Option B: PostgreSQL Local
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+1. **Cài đặt PostgreSQL:**
+   - Windows: Tải từ https://www.postgresql.org/download/windows/
+   - Hoặc dùng: `winget install PostgreSQL.PostgreSQL`
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+2. **Khởi động service:**
+   ```cmd
+   # Qua Services
+   services.msc -> postgresql-x64-16 -> Start
+   
+   # Hoặc qua Command Prompt (Admin)
+   net start postgresql-x64-16
+   ```
+
+3. **Tạo database:**
+   ```cmd
+   "C:\Program Files\PostgreSQL\16\bin\psql.exe" -U postgres
+   CREATE DATABASE smartchat_db;
+   CREATE USER smartchat_user WITH PASSWORD '19102003';
+   GRANT ALL PRIVILEGES ON DATABASE smartchat_db TO smartchat_user;
+   ```
+
+### 5. Setup Database
+
+#### Option A: Setup đơn giản (Khuyến nghị)
+```bash
+pnpm setup:simple
+```
+
+#### Option B: Setup thủ công
+```bash
+# Generate Prisma client
+pnpm db:generate
+
+# Push schema to database
+pnpm db:push
+
+# Seed database with sample data
+pnpm db:seed
+```
+
+#### Option C: Setup đầy đủ (với kiểm tra PostgreSQL)
+```bash
+pnpm setup:db
+```
+
+### 6. Chạy ứng dụng
 
 ```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+# Development mode với auto-restart
+pnpm start:dev
+
+# Production mode
+pnpm start:prod
+
+# Debug mode
+pnpm start:debug
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## 📡 API Documentation
 
-## Resources
+### Swagger UI
+Sau khi chạy ứng dụng, truy cập: **http://localhost:51213/api**
 
-Check out a few resources that may come in handy when working with NestJS:
+### Authentication Endpoints
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+#### Đăng ký người dùng
+```http
+POST /auth/register
+Content-Type: application/json
 
-## Support
+{
+  "email": "user@example.com",
+  "username": "john_doe",
+  "password": "password123",
+  "avatar": "https://example.com/avatar.jpg"
+}
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+#### Đăng nhập
+```http
+POST /auth/login
+Content-Type: application/json
 
-## Stay in touch
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+#### Đăng xuất
+```http
+POST /auth/logout
+Authorization: Bearer <jwt-token>
+```
 
-## License
+### User Endpoints
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+#### Lấy danh sách users
+```http
+GET /users
+Authorization: Bearer <jwt-token>
+```
+
+#### Lấy thông tin user
+```http
+GET /users/:id
+Authorization: Bearer <jwt-token>
+```
+
+#### Cập nhật user
+```http
+PATCH /users/:id
+Authorization: Bearer <jwt-token>
+Content-Type: application/json
+
+{
+  "username": "new_username",
+  "email": "newemail@example.com",
+  "avatar": "https://example.com/new-avatar.jpg"
+}
+```
+
+### Chat Endpoints
+
+#### Tạo chat mới
+```http
+POST /chats
+Authorization: Bearer <jwt-token>
+Content-Type: application/json
+
+{
+  "name": "Nhóm bạn thân",
+  "memberIds": ["user1_id", "user2_id"]
+}
+```
+
+#### Lấy danh sách chat
+```http
+GET /chats
+Authorization: Bearer <jwt-token>
+```
+
+#### Lấy tin nhắn của chat
+```http
+GET /chats/:id/messages
+Authorization: Bearer <jwt-token>
+```
+
+#### Gửi tin nhắn
+```http
+POST /chats/:id/messages
+Authorization: Bearer <jwt-token>
+Content-Type: application/json
+
+{
+  "content": "Xin chào! Bạn khỏe không?",
+  "type": "TEXT"
+}
+```
+
+### AI Chat Endpoints
+
+#### Tạo AI chat mới
+```http
+POST /ai-chats
+Authorization: Bearer <jwt-token>
+Content-Type: application/json
+
+{
+  "title": "Hỗ trợ kỹ thuật"
+}
+```
+
+#### Lấy danh sách AI chat
+```http
+GET /ai-chats
+Authorization: Bearer <jwt-token>
+```
+
+#### Gửi tin nhắn cho AI
+```http
+POST /ai-chats/:id/messages
+Authorization: Bearer <jwt-token>
+Content-Type: application/json
+
+{
+  "content": "Bạn có thể giúp tôi giải thích về machine learning không?"
+}
+```
+
+## 🔌 WebSocket Events
+
+### Kết nối WebSocket
+```javascript
+import { io } from 'socket.io-client';
+
+const socket = io('http://localhost:51213');
+```
+
+### Client → Server Events
+
+#### Join user vào hệ thống
+```javascript
+socket.emit('join', { userId: 'user-id' });
+```
+
+#### Tham gia chat room
+```javascript
+socket.emit('joinChat', { chatId: 'chat-id' });
+```
+
+#### Gửi tin nhắn
+```javascript
+socket.emit('sendMessage', {
+  chatId: 'chat-id',
+  userId: 'user-id',
+  message: {
+    content: 'Hello!',
+    type: 'TEXT'
+  }
+});
+```
+
+#### Typing indicator
+```javascript
+// Bắt đầu typing
+socket.emit('typing', { chatId: 'chat-id', userId: 'user-id' });
+
+// Dừng typing
+socket.emit('stopTyping', { chatId: 'chat-id', userId: 'user-id' });
+```
+
+#### Đánh dấu tin nhắn đã đọc
+```javascript
+socket.emit('markAsRead', {
+  chatId: 'chat-id',
+  messageId: 'message-id',
+  userId: 'user-id'
+});
+```
+
+### Server → Client Events
+
+#### Lắng nghe tin nhắn mới
+```javascript
+socket.on('newMessage', (data) => {
+  console.log('Tin nhắn mới:', data);
+  // data: { message, chatId, senderId }
+});
+```
+
+#### Lắng nghe typing indicator
+```javascript
+socket.on('typing', (data) => {
+  console.log('User đang typing:', data);
+  // data: { userId, chatId }
+});
+
+socket.on('typingStop', (data) => {
+  console.log('User dừng typing:', data);
+});
+```
+
+#### Lắng nghe tin nhắn đã đọc
+```javascript
+socket.on('messageRead', (data) => {
+  console.log('Tin nhắn đã đọc:', data);
+  // data: { messageId, chatId, userId }
+});
+```
+
+#### Lắng nghe lỗi
+```javascript
+socket.on('error', (error) => {
+  console.error('WebSocket error:', error);
+});
+```
+
+## 🗄️ Database Schema
+
+### Users Table
+```sql
+CREATE TABLE "User" (
+  "id" TEXT NOT NULL,
+  "email" TEXT NOT NULL,
+  "username" TEXT NOT NULL,
+  "password" TEXT NOT NULL,
+  "avatar" TEXT,
+  "status" "UserStatus" NOT NULL DEFAULT 'OFFLINE',
+  "lastSeen" TIMESTAMP(3),
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+);
+```
+
+### Chats Table
+```sql
+CREATE TABLE "Chat" (
+  "id" TEXT NOT NULL,
+  "name" TEXT,
+  "type" "ChatType" NOT NULL DEFAULT 'DIRECT',
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "Chat_pkey" PRIMARY KEY ("id")
+);
+```
+
+### Messages Table
+```sql
+CREATE TABLE "Message" (
+  "id" TEXT NOT NULL,
+  "content" TEXT NOT NULL,
+  "type" "MessageType" NOT NULL DEFAULT 'TEXT',
+  "senderId" TEXT NOT NULL,
+  "chatId" TEXT NOT NULL,
+  "isRead" BOOLEAN NOT NULL DEFAULT false,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "Message_pkey" PRIMARY KEY ("id")
+);
+```
+
+### AI Chats Table
+```sql
+CREATE TABLE "AIChat" (
+  "id" TEXT NOT NULL,
+  "userId" TEXT NOT NULL,
+  "title" TEXT,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "AIChat_pkey" PRIMARY KEY ("id")
+);
+```
+
+### AI Messages Table
+```sql
+CREATE TABLE "AIMessage" (
+  "id" TEXT NOT NULL,
+  "content" TEXT NOT NULL,
+  "role" "AIRole" NOT NULL,
+  "aiChatId" TEXT NOT NULL,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "AIMessage_pkey" PRIMARY KEY ("id")
+);
+```
+
+## 🔧 Scripts và Commands
+
+### Database Scripts
+
+```bash
+# Generate Prisma client
+pnpm db:generate
+
+# Push schema to database
+pnpm db:push
+
+# Run migrations
+pnpm db:migrate:dev
+
+# Deploy migrations (production)
+pnpm db:migrate:deploy
+
+# Reset database
+pnpm db:migrate:reset
+
+# Check migration status
+pnpm db:migrate:status
+
+# Open Prisma Studio
+pnpm db:studio
+
+# Seed database
+pnpm db:seed
+```
+
+### Setup Scripts
+
+```bash
+# Setup đơn giản (khuyến nghị)
+pnpm setup:simple
+
+# Setup đầy đủ với kiểm tra PostgreSQL
+pnpm setup:db
+
+# Setup development
+pnpm setup:dev
+
+# Setup production
+pnpm setup:prod
+```
+
+### Migration Scripts
+
+```bash
+# Development migration
+pnpm migrate:dev
+
+# Production migration
+pnpm migrate:prod
+```
+
+## 🐳 Docker Development
+
+### Khởi động với Docker Compose
+```bash
+# Khởi động tất cả services
+docker-compose -f docker-compose.dev.yml up -d
+
+# Chỉ khởi động PostgreSQL
+docker-compose -f docker-compose.dev.yml up -d postgres
+
+# Xem logs
+docker-compose -f docker-compose.dev.yml logs -f
+
+# Dừng services
+docker-compose -f docker-compose.dev.yml down
+```
+
+### Docker Commands
+```bash
+# Build development image
+docker build -f Dockerfile.dev -t smartchat-dev .
+
+# Chạy container
+docker run -p 51213:51213 smartchat-dev
+
+# Vào container
+docker exec -it smartchat_app bash
+```
+
+## 🔍 Troubleshooting
+
+### Lỗi kết nối PostgreSQL
+
+#### "Connection refused"
+```bash
+# Kiểm tra PostgreSQL service
+net start postgresql-x64-16
+
+# Hoặc dùng Docker
+docker-compose -f docker-compose.dev.yml up -d postgres
+```
+
+#### "Command not found: pg_isready"
+```bash
+# Thêm PostgreSQL vào PATH
+# Thêm: C:\Program Files\PostgreSQL\16\bin
+
+# Hoặc dùng full path
+"C:\Program Files\PostgreSQL\16\bin\pg_isready.exe" -h localhost
+```
+
+### Lỗi Prisma
+
+#### "Module '@prisma/client' has no exported member 'PrismaClient'"
+```bash
+# Generate Prisma client
+pnpm prisma generate
+```
+
+#### "Property 'user' does not exist on type 'PrismaService'"
+```bash
+# Regenerate Prisma client
+pnpm prisma generate
+```
+
+### Lỗi JWT
+
+#### "JWT_SECRET is not defined"
+```bash
+# Kiểm tra file .env
+cat .env
+
+# Đảm bảo JWT_SECRET được set
+echo "JWT_SECRET=your-secret-key" >> .env
+```
+
+## 🚀 Deployment
+
+### Production Setup
+
+1. **Cấu hình production environment:**
+   ```bash
+   cp .env.production .env
+   # Chỉnh sửa DATABASE_URL và JWT_SECRET
+   ```
+
+2. **Build application:**
+   ```bash
+   pnpm build
+   ```
+
+3. **Setup production database:**
+   ```bash
+   pnpm setup:prod
+   ```
+
+4. **Start production server:**
+   ```bash
+   pnpm start:prod
+   ```
+
+### Docker Production
+
+```dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+RUN npm install --only=production
+
+# Copy source code
+COPY . .
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Build application
+RUN npm run build
+
+# Expose port
+EXPOSE 51213
+
+# Start production server
+CMD ["npm", "run", "start:prod"]
+```
+
+## 📊 Monitoring và Logs
+
+### Log Levels
+- `debug`: Development mode
+- `info`: Production mode
+- `error`: Lỗi hệ thống
+
+### Health Check
+```http
+GET /health
+```
+
+### Metrics
+```http
+GET /metrics
+```
+
+## 🔒 Security
+
+### JWT Authentication
+- Tất cả API endpoints (trừ auth) yêu cầu JWT token
+- Token format: `Authorization: Bearer <token>`
+- Token expiration: 24 hours
+
+### CORS Configuration
+```typescript
+// main.ts
+app.enableCors({
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  credentials: true,
+});
+```
+
+### Password Hashing
+- Sử dụng bcryptjs với salt rounds: 10
+- Passwords được hash trước khi lưu database
+
+## 🧪 Testing
+
+### Unit Tests
+```bash
+# Chạy tất cả tests
+pnpm test
+
+# Chạy tests với watch mode
+pnpm test:watch
+
+# Chạy tests với coverage
+pnpm test:cov
+```
+
+### E2E Tests
+```bash
+# Chạy E2E tests
+pnpm test:e2e
+```
+
+### API Tests
+```bash
+# Test với Swagger UI
+# Truy cập: http://localhost:51213/api
+```
+
+## 📝 License
+
+MIT License - Xem file LICENSE để biết thêm chi tiết.
+
+## 🤝 Contributing
+
+1. Fork repository
+2. Tạo feature branch: `git checkout -b feature/new-feature`
+3. Commit changes: `git commit -am 'Add new feature'`
+4. Push branch: `git push origin feature/new-feature`
+5. Tạo Pull Request
+
+## 📞 Support
+
+- **Issues**: Tạo issue trên GitHub
+- **Documentation**: Xem Swagger UI tại `/api`
+- **Database**: Sử dụng Prisma Studio tại `pnpm db:studio`

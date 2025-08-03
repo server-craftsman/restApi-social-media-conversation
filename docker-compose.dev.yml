@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: smartchat_postgres_dev
+    environment:
+      POSTGRES_DB: smartchat_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 19102003
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    networks:
+      - smartchat_dev_network
+    restart: unless-stopped
+
+volumes:
+  postgres_dev_data:
+
+networks:
+  smartchat_dev_network:
+    driver: bridge 
