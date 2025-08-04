@@ -27,6 +27,10 @@ import { QueryUserDto } from './dto/query-user.dto';
 import { ICreateUser, IUpdateUser } from './domain/interfaces/user.interface';
 import { IPaginatedResponse } from '../utils/types/pagination-options';
 import { ApiResponseDto, PaginatedResponseDto, ErrorResponseDto } from '../common/dto/api-response.dto';
+import { RolesGuard } from '../roles/guards/roles.guard';
+import { Roles } from '../roles/decorators/roles.decorator';
+import { CurrentUser } from '../roles/decorators/current-user.decorator';
+import { UserRole } from '../user/domain/interfaces/user.interface';
 
 @ApiTags('Users')
 @Controller({
@@ -82,6 +86,9 @@ export class UserController {
         description: 'Email hoặc username đã tồn tại',
         type: ErrorResponseDto,
     })
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN)
+    @ApiBearerAuth('JWT-auth')
     async create(@Body() createUserDto: CreateUserDto): Promise<ApiResponseDto> {
         const userData: ICreateUser = {
             email: createUserDto.email,
@@ -108,7 +115,8 @@ export class UserController {
     }
 
     @Get()
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN)
     @ApiBearerAuth('JWT-auth')
     @ApiOperation({
         summary: 'Lấy danh sách người dùng với pagination',
@@ -137,7 +145,8 @@ export class UserController {
     }
 
     @Get('all')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN)
     @ApiBearerAuth('JWT-auth')
     @ApiOperation({
         summary: 'Lấy tất cả người dùng (không phân trang)',
@@ -159,7 +168,8 @@ export class UserController {
     }
 
     @Get('search')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN)
     @ApiBearerAuth('JWT-auth')
     @ApiOperation({
         summary: 'Tìm kiếm người dùng',
@@ -187,7 +197,8 @@ export class UserController {
     }
 
     @Get('stats')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN)
     @ApiBearerAuth('JWT-auth')
     @ApiOperation({
         summary: 'Thống kê người dùng',
@@ -209,7 +220,8 @@ export class UserController {
     }
 
     @Get('online')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN)
     @ApiBearerAuth('JWT-auth')
     @ApiOperation({
         summary: 'Lấy danh sách người dùng đang online',
@@ -231,7 +243,8 @@ export class UserController {
     }
 
     @Get(':id')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN)
     @ApiBearerAuth('JWT-auth')
     @ApiOperation({
         summary: 'Lấy thông tin người dùng theo ID',
@@ -314,7 +327,8 @@ export class UserController {
     }
 
     @Delete(':id')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN)
     @ApiBearerAuth('JWT-auth')
     @ApiOperation({
         summary: 'Xóa người dùng',

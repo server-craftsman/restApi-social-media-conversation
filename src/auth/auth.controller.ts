@@ -12,6 +12,7 @@ import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { ICreateUser } from '../user/domain/interfaces/user.interface';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { ApiResponseDto, ErrorResponseDto } from '../common/dto/api-response.dto';
+// authorization
 
 @ApiTags('Authentication')
 @Controller({
@@ -178,25 +179,15 @@ export class AuthController {
     @ApiBearerAuth('JWT-auth')
     @ApiOperation({
         summary: 'Đăng xuất người dùng',
-        description: 'Đăng xuất và cập nhật trạng thái offline',
+        description: 'Đăng xuất người dùng và cập nhật trạng thái offline',
     })
     @ApiResponse({
         status: HttpStatus.OK,
         description: 'Đăng xuất thành công',
         type: ApiResponseDto,
-        schema: {
-            example: {
-                statusCode: 200,
-                message: 'Logout successful',
-                data: {
-                    message: 'Logged out successfully',
-                },
-                timestamp: '2024-01-01T00:00:00.000Z',
-            },
-        },
     })
     async logout(@Request() req): Promise<ApiResponseDto> {
-        const result = await this.authService.logout(req.user.sub);
+        const result = await this.authService.logout(req.user.id); // Fixed: use req.user.id instead of req.user.sub
         return {
             statusCode: 200,
             message: 'Logout successful',
@@ -218,13 +209,30 @@ export class AuthController {
         type: ApiResponseDto,
     })
     async getProfile(@Request() req): Promise<ApiResponseDto> {
-        const user = await this.userService.findUserById(req.user.sub);
-        return {
-            statusCode: 200,
-            message: 'Profile retrieved successfully',
-            data: { user },
-            timestamp: new Date().toISOString(),
-        };
+        // Disable caching for this endpoint
+        req.res.setHeader('Cache-Control', 'no-cache');
+
+        console.log('JWT User Object:', req.user); // Debug log
+        console.log('User ID:', req.user?.id); // Debug log
+
+        if (!req.user || !req.user.id) {
+            throw new HttpException('User information not found in token', HttpStatus.UNAUTHORIZED);
+        }
+
+        try {
+            const user = await this.userService.findUserById(req.user.id);
+            console.log('Found user:', user); // Debug log
+
+            return {
+                statusCode: 200,
+                message: 'Profile retrieved successfully',
+                data: user,
+                timestamp: new Date().toISOString(),
+            };
+        } catch (error) {
+            console.error('Error in getProfile:', error);
+            throw error;
+        }
     }
 
     @Post('refresh-token')
@@ -240,7 +248,13 @@ export class AuthController {
         type: ApiResponseDto,
     })
     async refreshToken(@Request() req): Promise<ApiResponseDto> {
-        const result = await this.authService.refreshToken(req.user.sub);
+        console.log('Refresh Token - User Object:', req.user); // Debug log
+
+        if (!req.user || !req.user.id) {
+            throw new HttpException('User information not found in token', HttpStatus.UNAUTHORIZED);
+        }
+
+        const result = await this.authService.refreshToken(req.user.id); // Fixed: use req.user.id instead of req.user.sub
         return {
             statusCode: 200,
             message: 'Token refreshed successfully',

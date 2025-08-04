@@ -46,20 +46,31 @@ export class CacheInterceptor implements NestInterceptor {
                 try {
                     const cachedData = await this.redisService.getCache(cacheKey);
                     if (cachedData) {
-                        // Return cached data
-                        return {
+                        console.log('Cache HIT:', cacheKey);
+                        console.log('Cached data:', cachedData);
+
+                        // If cached data is already in ApiResponseDto format, return as is
+                        if (cachedData && typeof cachedData === 'object' && 'statusCode' in cachedData) {
+                            return of(cachedData);
+                        }
+
+                        // Return cached data in ApiResponseDto format
+                        return of({
                             statusCode: 200,
-                            message: 'Data retrieved from cache',
+                            message: 'Retrieved successfully',
                             data: cachedData,
                             timestamp: new Date().toISOString(),
-                            cached: true,
-                        };
+                        });
                     } else {
+                        console.log('Cache MISS:', cacheKey);
                         // Continue with original request and cache the result
                         return next.handle().pipe(
                             tap(async (data) => {
                                 try {
-                                    await this.redisService.setCache(cacheKey, data, ttl);
+                                    console.log('Caching response data:', data);
+                                    // Cache only the data portion, not the whole response
+                                    const dataToCache = data?.data || data;
+                                    await this.redisService.setCache(cacheKey, dataToCache, ttl);
                                 } catch (error) {
                                     console.error('Failed to cache response:', error);
                                 }
@@ -70,7 +81,8 @@ export class CacheInterceptor implements NestInterceptor {
                     console.error('Cache error:', error);
                     return next.handle();
                 }
-            })
+            }),
+            switchMap(result => result)
         );
     }
 

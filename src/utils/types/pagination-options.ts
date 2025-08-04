@@ -19,7 +19,7 @@ export interface IQueryOptions {
 }
 
 export interface IPaginatedResponse<T> {
-  data: T[];
+  items: T[];
   pagination: {
     page: number;
     limit: number;

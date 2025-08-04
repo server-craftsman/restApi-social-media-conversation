@@ -3,6 +3,10 @@
 # SmartChat API Setup Script
 # This script sets up the development environment
 
+clear
+
+call scripts/show-logo.bat
+
 set -e
 
 echo "🚀 Starting SmartChat API Setup..."

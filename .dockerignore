@@ -110,5 +110,5 @@ tests/
 *.test.js
 *.spec.js
 
-# Scripts
-scripts/ 
+# Comment out the scripts exclusion to allow all scripts
+# scripts/ 

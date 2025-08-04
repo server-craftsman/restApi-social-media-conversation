@@ -1,7 +1,10 @@
 @echo off
-echo ==========================================
-echo 🌟 SmartChat API Setup (Windows)
-echo ==========================================
+chcp 65001 >nul
+cls
+
+echo.
+call scripts\show-logo.bat
+echo.
 
 REM Check if Docker is installed
 docker --version >nul 2>&1

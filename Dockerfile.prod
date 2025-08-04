@@ -13,6 +13,10 @@ COPY package.json pnpm-lock.yaml ./
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
+# Copy essential scripts first
+COPY scripts/docker-entrypoint.sh scripts/init-db.sql ./scripts/
+RUN chmod +x ./scripts/*.sh
+
 # Copy source code
 COPY . .
 
@@ -42,6 +46,7 @@ RUN pnpm install --prod --frozen-lockfile
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/scripts ./scripts/
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
@@ -55,4 +60,4 @@ USER nestjs
 EXPOSE 51213
 
 # Start production server
-CMD ["node", "dist/main"] 
+CMD ["sh", "-c", "chmod +x node dist/main"]

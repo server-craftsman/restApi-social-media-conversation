@@ -59,7 +59,7 @@ export class UserService {
         const result = await this.userRepository.findWithPagination(query);
 
         return {
-            data: UserMapper.toResponseList(result.data),
+            items: UserMapper.toResponseList(result.items),
             pagination: result.pagination,
         };
     }

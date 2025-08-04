@@ -14,7 +14,8 @@ export class ApiResponseDto<T = any> {
     message: string;
 
     @ApiProperty({
-        description: 'Dữ liệu trả về',
+        description: 'Dữ liệu response',
+        example: {},
     })
     data?: T;
 

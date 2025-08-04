@@ -1,7 +1,10 @@
 @echo off
-echo ==========================================
-echo 🔥 SmartChat Hot Reload Test
-echo ==========================================
+chcp 65001 >nul
+cls
+
+call scripts\show-logo.bat
+
+echo.
 
 echo 📝 Testing hot reload functionality...
 echo.

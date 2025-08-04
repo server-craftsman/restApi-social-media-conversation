@@ -175,7 +175,7 @@ export class UserRepository extends UserRepositoryAbstract {
         const totalPages = Math.ceil(total / limit);
 
         return {
-            data: users,
+            items: users,
             pagination: {
                 page,
                 limit,
