@@ -8,14 +8,32 @@ export class RedisService {
     private readonly redis: Redis;
 
     constructor(private readonly configService: ConfigService) {
+        const redisHost = process.env.REDIS_HOST || this.configService.get('app.redis.host');
+        const redisPort = parseInt(process.env.REDIS_PORT || '', 10) || this.configService.get('app.redis.port');
+        const redisPassword = process.env.REDIS_PASSWORD || this.configService.get('app.redis.password');
+        const redisDb = parseInt(process.env.REDIS_DB || '', 10) || this.configService.get('app.redis.db') || 0;
+
+        this.logger.log(`Connecting to Redis at ${redisHost}:${redisPort}`);
+        this.logger.log(`Redis password: ${redisPassword ? 'Set' : 'Not set'}`);
+
+        if (!redisHost || !redisPort) {
+            this.logger.error('Redis configuration incomplete:', {
+                host: redisHost,
+                port: redisPort,
+                REDIS_HOST: process.env.REDIS_HOST,
+                REDIS_PORT: process.env.REDIS_PORT,
+            });
+        }
+
         this.redis = new Redis({
-            host: this.configService.get('app.redis.host') || 'localhost',
-            port: this.configService.get('app.redis.port') || 6379,
-            password: this.configService.get('app.redis.password') || undefined,
-            db: this.configService.get('app.redis.db') || 0,
+            host: redisHost,
+            port: redisPort,
+            password: redisPassword || undefined,
+            db: redisDb,
             keyPrefix: this.configService.get('app.redis.keyPrefix') || 'smartchat:',
-            maxRetriesPerRequest: this.configService.get('app.redis.maxRetriesPerRequest') || 3,
+            maxRetriesPerRequest: this.configService.get('app.redis.maxRetriesPerRequest') || 1,
             enableReadyCheck: this.configService.get('app.redis.enableReadyCheck') !== false,
+            connectTimeout: 60000,
         });
 
         this.redis.on('connect', () => {
@@ -23,7 +41,8 @@ export class RedisService {
         });
 
         this.redis.on('error', (error) => {
-            this.logger.error('Redis connection error:', error);
+            this.logger.error('Redis connection error:');
+            this.logger.error(error);
         });
 
         this.redis.on('ready', () => {

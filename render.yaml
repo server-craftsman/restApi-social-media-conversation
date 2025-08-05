@@ -16,7 +16,7 @@ services:
     name: smartchat-api
     env: node
     plan: free
-    buildCommand: pnpm install --frozen-lockfile && pnpm prisma generate && pnpm run build
+    buildCommand: chmod +x scripts/debug-env.sh && scripts/debug-env.sh && pnpm install --frozen-lockfile && pnpm prisma generate && pnpm prisma migrate deploy && pnpm run build
     startCommand: pnpm run start:prod
     envVars:
       - key: NODE_ENV
