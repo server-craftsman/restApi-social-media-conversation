@@ -28,7 +28,18 @@ async function bootstrap() {
     // Security middleware
     const helmetEnabled = configService.get('app.security.helmet.enabled');
     if (helmetEnabled !== false) {
-      app.use(helmet());
+      app.use(helmet({
+        contentSecurityPolicy: {
+          directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            imgSrc: ["'self'", "data:", "https:", "http:", "blob:"],
+            scriptSrc: ["'self'", "'unsafe-inline'"],
+            connectSrc: ["'self'"]
+          },
+        },
+      }));
     }
 
     // Compression
@@ -50,12 +61,6 @@ async function bootstrap() {
     const corsEnabled = configService.get('app.security.cors.enabled');
     const environment = configService.get('app.environment');
 
-    console.log('CORS Configuration:', {
-      enabled: corsEnabled,
-      environment: environment,
-      allowedOrigins: allowedOrigins,
-    });
-
     if (corsEnabled !== false) {
       // In development, allow all origins for easier testing
       if (environment === 'development') {
@@ -66,26 +71,19 @@ async function bootstrap() {
           allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
           exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
         });
-        console.log('🔓 CORS: Development mode - allowing all origins');
       } else {
         // In production, use strict origin checking
         app.enableCors({
           origin: (origin, callback) => {
             // Allow requests with no origin (like mobile apps or curl requests)
             if (!origin) {
-              console.log('CORS: No origin - allowing');
               return callback(null, true);
             }
 
-            console.log('CORS: Checking origin:', origin);
-
             // Check if origin is in allowed list
             if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
-              console.log('CORS: Origin allowed:', origin);
               return callback(null, true);
             } else {
-              console.log('CORS: Origin rejected:', origin);
-              console.log('CORS: Allowed origins:', allowedOrigins);
               return callback(new Error(`CORS: Origin ${origin} not allowed`), false);
             }
           },
@@ -94,104 +92,36 @@ async function bootstrap() {
           allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
           exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
         });
-        console.log('🔒 CORS: Production mode - using origin whitelist');
       }
     }
 
     // Swagger configuration
     const config = new DocumentBuilder()
-      .setTitle('🚀 SmartChat API')
-      // .setDescription(`
-      //   <div style="text-align: center; margin: 20px 0;">
-      //     <h1 style="color: #2c3e50; font-size: 2.5em; margin: 0;">🎯 SmartChat</h1>
-      //     <p style="color: #7f8c8d; font-size: 1.2em; margin: 10px 0;">Ứng dụng nhắn tin thời gian thực + AI trợ lý</p>
-      //     <div style="display: flex; justify-content: center; gap: 10px; margin: 20px 0; flex-wrap: wrap;">
-      //       <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 16px; border-radius: 20px; font-size: 0.9em;">⚡ Real-time</span>
-      //       <span style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 8px 16px; border-radius: 20px; font-size: 0.9em;">🤖 AI Powered</span>
-      //       <span style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 8px 16px; border-radius: 20px; font-size: 0.9em;">🔒 Secure</span>
-      //       <span style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; padding: 8px 16px; border-radius: 20px; font-size: 0.9em;">📱 Modern</span>
-      //     </div>
-      //   </div>
-
-      //   <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; margin: 20px 0; color: white;">
-      //     <h3 style="margin: 0 0 15px 0; color: white;">✨ Tính năng chính</h3>
-      //     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
-      //       <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
-      //         <h4 style="margin: 0 0 8px 0; color: #f8f9fa;">🔐 Authentication</h4>
-      //         <p style="margin: 0; font-size: 0.9em; color: #e9ecef;">Đăng ký/Đăng nhập với JWT Token</p>
-      //       </div>
-      //       <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
-      //         <h4 style="margin: 0 0 8px 0; color: #f8f9fa;">💬 Real-time Chat</h4>
-      //         <p style="margin: 0; font-size: 0.9em; color: #e9ecef;">Chat 1-1 và nhóm với WebSocket</p>
-      //       </div>
-      //       <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
-      //         <h4 style="margin: 0 0 8px 0; color: #f8f9fa;">🤖 AI ChatBot</h4>
-      //         <p style="margin: 0; font-size: 0.9em; color: #e9ecef;">Tích hợp AI assistant thông minh</p>
-      //       </div>
-      //       <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
-      //         <h4 style="margin: 0 0 8px 0; color: #f8f9fa;">👥 User Management</h4>
-      //         <p style="margin: 0; font-size: 0.9em; color: #e9ecef;">Quản lý người dùng và trạng thái</p>
-      //       </div>
-      //       <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
-      //         <h4 style="margin: 0 0 8px 0; color: #f8f9fa;">📚 Message History</h4>
-      //         <p style="margin: 0; font-size: 0.9em; color: #e9ecef;">Lưu trữ và truy xuất tin nhắn</p>
-      //       </div>
-      //       <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
-      //         <h4 style="margin: 0 0 8px 0; color: #f8f9fa;">🛡️ Security & Cache</h4>
-      //         <p style="margin: 0; font-size: 0.9em; color: #e9ecef;">Rate Limiting & Redis Cache</p>
-      //       </div>
-      //     </div>
-      //   </div>
-
-      //   <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 10px; margin: 20px 0; color: white;">
-      //     <h3 style="margin: 0 0 15px 0; color: white;">🔌 WebSocket Events</h3>
-      //     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
-      //       <code style="background: rgba(255,255,255,0.2); padding: 8px 12px; border-radius: 6px; display: block; font-family: 'Fira Code', monospace;">join</code>
-      //       <code style="background: rgba(255,255,255,0.2); padding: 8px 12px; border-radius: 6px; display: block; font-family: 'Fira Code', monospace;">joinChat</code>
-      //       <code style="background: rgba(255,255,255,0.2); padding: 8px 12px; border-radius: 6px; display: block; font-family: 'Fira Code', monospace;">sendMessage</code>
-      //       <code style="background: rgba(255,255,255,0.2); padding: 8px 12px; border-radius: 6px; display: block; font-family: 'Fira Code', monospace;">typing</code>
-      //       <code style="background: rgba(255,255,255,0.2); padding: 8px 12px; border-radius: 6px; display: block; font-family: 'Fira Code', monospace;">markAsRead</code>
-      //     </div>
-      //   </div>
-
-      //   <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 20px; border-radius: 10px; margin: 20px 0; color: white;">
-      //     <h3 style="margin: 0 0 15px 0; color: white;">🔒 Authentication</h3>
-      //     <p style="margin: 0 0 10px 0;">Tất cả API endpoints (trừ auth) yêu cầu JWT token trong header:</p>
-      //     <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; border-left: 4px solid #fff;">
-      //       <code style="color: #f8f9fa; font-family: 'Fira Code', monospace;">Authorization: Bearer &lt;your-jwt-token&gt;</code>
-      //     </div>
-      //   </div>
-
-      //   <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); padding: 20px; border-radius: 10px; margin: 20px 0; color: white;">
-      //     <h3 style="margin: 0 0 15px 0; color: white;">⚡ Rate Limiting</h3>
-      //     <p style="margin: 0 0 10px 0;">API được bảo vệ bởi rate limiting để chống DDOS:</p>
-      //     <ul style="margin: 0; padding-left: 20px;">
-      //       <li>Giới hạn: <strong>${configService.get('app.rateLimit.max')} requests</strong> per <strong>${configService.get('app.rateLimit.windowMs') / 1000 / 60} minutes</strong></li>
-      //       <li>Headers: <code style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px;">X-RateLimit-*</code></li>
-      //     </ul>
-      //   </div>
-      // `)
-      .setVersion('1.0')
-      .addTag('Chats', 'Quản lý chat và tin nhắn')
-      .addTag('AI Chat', 'Tương tác với AI assistant')
-      .addTag('WebSocket', 'Real-time communication events')
+      .setTitle('SmartChat API')
+      .setDescription('Comprehensive API for SmartChat - an intelligent chat platform with AI-powered conversations, real-time messaging, and advanced chat management features.')
+      .setVersion('1.0.0')
+      .addTag('Authentication', 'User authentication and authorization endpoints')
+      .addTag('Chats', 'Chat rooms, messaging and conversation management')
+      .addTag('AI Chat', 'Intelligent AI assistant and chatbot interactions')
+      .addTag('WebSocket', 'Real-time communication and live updates')
+      .addTag('Users', 'User profile management and settings')
       .addBearerAuth(
         {
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
           name: 'JWT',
-          description: 'Enter JWT token',
+          description: 'Enter your JWT authentication token',
           in: 'header',
         },
         'JWT-auth',
       )
-      .addServer('http://localhost:51213', 'Development server')
-      .addServer('https://api.smartchat.com', 'Production server')
+      .addServer('http://localhost:51213', 'Development Server')
+      .addServer('https://api.smartchat.com', 'Production Server')
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('ambatukam', app, document, {
+    SwaggerModule.setup('swagger-ui', app, document, {
       swaggerOptions: {
         persistAuthorization: true,
         filter: true,
@@ -212,309 +142,637 @@ async function bootstrap() {
         showExtensions: true,
         showCommonExtensions: true,
         tryItOutEnabled: true,
+        tagsSorter: 'alpha',
+        operationsSorter: 'alpha',
+        validatorUrl: null,
       },
-      customSiteTitle: 'SmartChat API Documentation',
+      customSiteTitle: 'SmartChat API - Intelligent Chat Platform',
+      customfavIcon: '/favicon.ico',
       customCss: `
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Poppins:wght@400;500;600;700&display=swap');
         
         :root {
-          --primary-color: #DA020E;
-          --secondary-color: #B8101D;
-          --accent-color: #FFD700;
-          --success-color: #FFD700;
-          --warning-color: #DA020E;
-          --info-color: #FFD700;
-          --vietnam-red: #DA020E;
-          --vietnam-yellow: #FFD700;
+          --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+          --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+          --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+          --info-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          --dark-gradient: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+          --border-radius: 16px;
+          --border-radius-small: 8px;
+          --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.08);
+          --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.12);
         }
         
         * {
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+          box-sizing: border-box;
         }
         
-        code, pre, .microlight {
-          font-family: 'Fira Code', 'SF Mono', Monaco, Consolas, monospace !important;
-        }
-        
-        body {
-          background: linear-gradient(135deg, #DA020E 0%, #B8101D 100%) !important;
-          margin: 0 !important;
-          min-height: 100vh !important;
+        html, body {
+          margin: 0;
+          padding: 0;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          color: #1a202c;
+          scroll-behavior: smooth;
+          background: white !important;
         }
         
         .swagger-ui {
-          background: transparent !important;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
         }
         
         .swagger-ui .topbar {
+          border-bottom: 1px solid #e2e8f0 !important;
+          position: sticky !important;
+          top: 0 !important;
+          z-index: 1000 !important;
+        }
+        
+        .swagger-ui .topbar .download-url-wrapper {
           display: none !important;
+        }
+        
+        .swagger-ui .topbar .topbar-wrapper {
+          max-width: 1400px !important;
+          margin: 0 auto !important;
+          padding: 0 32px !important;
+        }
+        
+        .swagger-ui .topbar .topbar-wrapper .link {
+          font-size: 24px !important;
+          font-weight: 700 !important;
+          text-decoration: none !important;
+          font-family: 'Poppins', sans-serif !important;
+          color: #1a202c !important;
         }
         
         .swagger-ui .wrapper {
           max-width: 1400px !important;
           margin: 0 auto !important;
-          padding: 20px !important;
         }
         
         .swagger-ui .info {
-          background: rgba(255, 215, 0, 0.95) !important;
-          backdrop-filter: blur(20px) !important;
-          border-radius: 20px !important;
-          padding: 40px !important;
-          margin-bottom: 30px !important;
-          box-shadow: 0 20px 40px rgba(218, 2, 14, 0.3) !important;
-          border: 2px solid #DA020E !important;
+          background: white !important;
+          margin: 40px 0 !important;
+          padding: 0 !important;
+          border: none !important;
+          box-shadow: none !important;
         }
         
         .swagger-ui .info .title {
-          color: #DA020E !important;
-          font-size: 3em !important;
-          font-weight: 700 !important;
-          margin-bottom: 20px !important;
+          background: white !important;
+          color: #1a202c !important;
+          font-size: 48px !important;
+          font-weight: 800 !important;
+          margin-bottom: 24px !important;
+          line-height: 1.1 !important;
           text-align: center !important;
-          text-shadow: 2px 2px 4px rgba(218, 2, 14, 0.3) !important;
+          font-family: 'Poppins', sans-serif !important;
+          position: relative !important;
+        }
+        
+        .swagger-ui .info .title::before {
+          content: '' !important;
+          display: block !important;
+          width: 120px !important;
+          height: 120px !important;
+          background-image: url('https://cdn.24h.com.vn/upload/3-2023/images/2023-07-14/anh-1-1689300804-608-width650height867.jpg') !important;
+          background-size: cover !important;
+          background-repeat: no-repeat !important;
+          background-position: center !important;
+          margin: 0 auto 20px auto !important;
+          border-radius: 50% !important;
+          border: 3px solid #10b981 !important;
+          box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15) !important;
         }
         
         .swagger-ui .info .description {
-          font-size: 1em !important;
+          background: white !important;
+          color: #1a202c !important;
+          font-size: 16px !important;
           line-height: 1.6 !important;
-          color: #DA020E !important;
-          font-weight: 500 !important;
+          max-width: none !important;
         }
         
         .swagger-ui .scheme-container {
-          background: linear-gradient(135deg, #FFD700 0%, #FFC700 100%) !important;
-          padding: 20px !important;
-          border-radius: 15px !important;
-          border: 2px solid #DA020E !important;
-          box-shadow: 0 5px 15px rgba(218, 2, 14, 0.3) !important;
-        }
-        
-        .swagger-ui .opblock-tag {
-          background: rgba(255, 215, 0, 0.9) !important;
-          backdrop-filter: blur(10px) !important;
-          border-radius: 15px !important;
-          margin-bottom: 20px !important;
-          border: 2px solid #DA020E !important;
-          box-shadow: 0 10px 30px rgba(218, 2, 14, 0.2) !important;
-          overflow: hidden !important;
-        }
-        
-        .swagger-ui .opblock-tag-section h3 {
-          background: linear-gradient(135deg, #DA020E 0%, #B8101D 100%) !important;
-          color: #FFD700 !important;
-          padding: 20px 30px !important;
-          margin: 0 !important;
-          font-size: 1.3em !important;
-          font-weight: 600 !important;
+          color: #1a202c !important;
           border: none !important;
-          text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3) !important;
+          padding: 0 !important;
+          margin: 20px 0 !important;
         }
         
-        .swagger-ui .opblock {
-          border-radius: 12px !important;
-          margin: 15px 0 !important;
-          box-shadow: 0 5px 15px rgba(218, 2, 14, 0.2) !important;
-          border: 1px solid #DA020E !important;
-          overflow: hidden !important;
+        .swagger-ui .servers {
+          background: white !important;
+          border: none !important;
+          padding: 0 !important;
+          margin: 20px 0 !important;
         }
         
-        .swagger-ui .opblock.opblock-get {
-          background: linear-gradient(135deg, #FFD700 0%, #FFC700 20%, rgba(255, 215, 0, 0.1) 100%) !important;
+        .swagger-ui .servers-title {
+          color: #1a202c !important;
+          font-weight: 600 !important;
+          font-size: 14px !important;
+          margin-bottom: 8px !important;
+          font-family: 'Inter', sans-serif !important;
         }
         
-        .swagger-ui .opblock.opblock-post {
-          background: linear-gradient(135deg, #FFD700 0%, #FFC700 20%, rgba(255, 215, 0, 0.1) 100%) !important;
+        .swagger-ui .servers select {
+          background: white !important;
+          border: 1px solid #e2e8f0 !important;
+          border-radius: 6px !important;
+          padding: 8px 12px !important;
+          color: #1a202c !important;
+          font-size: 13px !important;
+          width: auto !important;
+          min-width: 300px !important;
         }
         
-        .swagger-ui .opblock.opblock-put {
-          background: linear-gradient(135deg, #FFD700 0%, #FFC700 20%, rgba(255, 215, 0, 0.1) 100%) !important;
+        .swagger-ui .auth-wrapper {
+          border: none !important;
+          padding: 0 !important;
+          margin: 20px 0 !important;
         }
         
-        .swagger-ui .opblock.opblock-delete {
-          background: linear-gradient(135deg, #DA020E 0%, #B8101D 20%, rgba(218, 2, 14, 0.1) 100%) !important;
+        .swagger-ui .auth-container {
+          border: none !important;
+          padding: 0 !important;
         }
         
-        .swagger-ui .opblock .opblock-summary {
-          padding: 15px 20px !important;
-          font-weight: 500 !important;
-          color: #DA020E !important;
-        }
-        
-        .swagger-ui .btn {
-          border-radius: 8px !important;
-          font-weight: 500 !important;
-          padding: 8px 16px !important;
-          transition: all 0.3s ease !important;
+        .swagger-ui .auth-container h4 {
+          color: #1a202c !important;
+          font-weight: 600 !important;
+          font-size: 14px !important;
+          margin: 0 0 8px 0 !important;
+          font-family: 'Inter', sans-serif !important;
         }
         
         .swagger-ui .btn.authorize {
-          background: linear-gradient(135deg, #DA020E 0%, #B8101D 100%) !important;
+          background: white !important;
+          border: 1px solid rgb(0, 232, 97) !important;
+          color: rgb(0, 232, 97) !important;
+          border-radius: 6px !important;
+          padding: 8px 16px !important;
+          font-size: 13px !important;
+          font-weight: 500 !important;
+          transition: all 0.2s ease !important;
+        }
+        
+        .swagger-ui .btn.authorize:hover {
+          background: rgb(0, 232, 97) !important;
+          color: white !important;
+          transform: none !important;
+          box-shadow: none !important;
+        }
+        
+        .swagger-ui .opblock-tag {
+          border: 1px solid #e2e8f0 !important;
+          border-radius: var(--border-radius) !important;
+          margin-bottom: 32px !important;
+          overflow: hidden !important;
+          transition: var(--transition) !important;
+        }
+        
+        .swagger-ui .opblock-tag:hover {
+          transform: translateY(-4px) !important;
+        }
+
+        .swagger-ui .opblock-tag-section h3 {
+          color: #1a202c !important;
+          font-weight: 700 !important;
+          font-size: 20px !important;
+          padding: 24px 32px !important;
+          margin: 0 !important;
+          border-bottom: 1px solid #e2e8f0 !important;
+          font-family: 'Poppins', sans-serif !important;
+        }
+        
+        .swagger-ui .opblock {
           border: none !important;
-          color: #FFD700 !important;
-          text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3) !important;
+          border-radius: var(--border-radius-small) !important;
+          margin: 12px 0 !important;
+          overflow: hidden !important;
+          transition: var(--transition) !important;
+        }
+        
+        .swagger-ui .opblock:hover {
+          transform: translateX(4px) !important;
+        }
+        
+        .swagger-ui .opblock.opblock-get {
+          background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%) !important;
+          border-left: 4px solid #4caf50 !important;
+        }
+        
+        .swagger-ui .opblock.opblock-post {
+          background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
+          border-left: 4px solid #2196f3 !important;
+        }
+        
+        .swagger-ui .opblock.opblock-put {
+          background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%) !important;
+          border-left: 4px solid #ff9800 !important;
+        }
+        
+        .swagger-ui .opblock.opblock-delete {
+          background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%) !important;
+          border-left: 4px solid #f44336 !important;
+        }
+        
+        .swagger-ui .opblock.opblock-patch {
+          background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%) !important;
+          border-left: 4px solid #9c27b0 !important;
+        }
+        .swagger-ui .opblock-summary {
+          padding: 20px 24px !important;
+          cursor: pointer !important;
+          transition: var(--transition) !important;
+          background: inherit !important;
+        }
+        
+        .swagger-ui .opblock-summary:hover {
+          background-color: rgba(255, 255, 255, 0.5) !important;
+        }
+        
+        .swagger-ui .opblock-summary-method {
+          font-weight: 700 !important;
+          text-transform: uppercase !important;
+          font-size: 11px !important;
+          padding: 8px 16px !important;
+          border-radius: 20px !important;
+          color: white !important;
+          min-width: 80px !important;
+          text-align: center !important;
+          font-family: 'JetBrains Mono', monospace !important;
+          letter-spacing: 0.5px !important;
+        }
+        
+        .swagger-ui .opblock-get .opblock-summary-method {
+          background: #4caf50 !important;
+        }
+        
+        .swagger-ui .opblock-post .opblock-summary-method {
+          background: #2196f3 !important;
+        }
+        
+        .swagger-ui .opblock-put .opblock-summary-method {
+          background: #ff9800 !important;
+        }
+        
+        .swagger-ui .opblock-delete .opblock-summary-method {
+          background: #f44336 !important;
+        }
+        
+        .swagger-ui .opblock-patch .opblock-summary-method {
+          background: #9c27b0 !important;
+        }
+        
+        .swagger-ui .opblock-summary-path {
+          color: #1a202c !important;
+          font-family: 'JetBrains Mono', monospace !important;
+          font-weight: 600 !important;
+          font-size: 15px !important;
+          margin-left: 20px !important;
+        }
+        
+        .swagger-ui .opblock-summary-description {
+          color: #64748b !important;
+          font-size: 14px !important;
+          margin-left: auto !important;
+          font-style: italic !important;
+        }
+        
+        .swagger-ui .btn {
+          border-radius: var(--border-radius-small) !important;
+          font-weight: 600 !important;
+          font-size: 14px !important;
+          transition: var(--transition) !important;
+          border: none !important;
+          font-family: 'Inter', sans-serif !important;
+          text-transform: uppercase !important;
+          letter-spacing: 0.5px !important;
         }
         
         .swagger-ui .btn.execute {
-          background: linear-gradient(135deg, #DA020E 0%, #B8101D 100%) !important;
-          border: none !important;
-          color: #FFD700 !important;
-          text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3) !important;
+          background: #10b981 !important;
+          color: white !important;
+          padding: 12px 24px !important;
         }
         
-        .swagger-ui .btn:hover {
+        .swagger-ui .btn.execute:hover {
           transform: translateY(-2px) !important;
-          box-shadow: 0 5px 15px rgba(218, 2, 14, 0.4) !important;
+          box-shadow: var(--shadow-medium) !important;
         }
         
-        .swagger-ui .parameters-container {
-          background: rgba(255, 215, 0, 0.3) !important;
-          border-radius: 10px !important;
-          padding: 20px !important;
-          border: 1px solid #DA020E !important;
+        .swagger-ui .btn.cancel {
+          background: #64748b !important;
+          color: white !important;
         }
         
+        .swagger-ui .btn.cancel:hover {
+          transform: translateY(-2px) !important;
+          box-shadow: var(--shadow-medium) !important;
+        }
+        
+        .swagger-ui .opblock-body {
+          border-top: 1px solid #e2e8f0 !important;
+        } 
+        
+        .swagger-ui .opblock-section-header {
+          color: #1a202c !important;
+          font-weight: 700 !important;
+          font-size: 16px !important;
+          padding: 16px 24px !important;
+          margin: 0 !important;
+          border: none !important;
+          text-transform: uppercase !important;
+          letter-spacing: 0.5px !important;
+        }
+        
+        .swagger-ui .parameters-container,
         .swagger-ui .responses-wrapper {
-          background: rgba(255, 215, 0, 0.3) !important;
-          border-radius: 10px !important;
+
+          margin: 20px 0 !important;
+          overflow: hidden !important;
+        }
+        
+        .swagger-ui .parameters-container .table-container,
+        .swagger-ui .responses-wrapper .responses-inner {
+          padding: 24px !important;
+        }
+        
+        .swagger-ui table {
+          width: 100% !important;
+          border-collapse: collapse !important;
+        }
+        
+        .swagger-ui table th {
+          color: #1a202c !important;
+          font-weight: 700 !important;
+          font-size: 14px !important;
+          padding: 16px 20px !important;
+          text-align: left !important;
+          border: none !important;
+          text-transform: uppercase !important;
+          letter-spacing: 0.5px !important;
+        }
+        
+        .swagger-ui table td {
+          padding: 16px 20px !important;
+          border-bottom: 1px solid #f1f5f9 !important;
+          vertical-align: top !important;
+          font-size: 14px !important;
+          color: #1a202c !important;
+        }
+        
+        .swagger-ui .parameter__name {
+          font-weight: 600 !important;
+          color: #1a202c !important;
+          font-family: 'JetBrains Mono', monospace !important;
+        }
+        
+        .swagger-ui .parameter__type {
+          color: #1a202c !important;
+          font-size: 11px !important;
+          font-family: 'JetBrains Mono', monospace !important;
+          padding: 4px 8px !important;
+          border-radius: 12px !important;
+          text-transform: uppercase !important;
+          letter-spacing: 0.5px !important;
+          font-weight: 600 !important;
+          background: #f8fafc !important;
+        }
+        
+        .swagger-ui .model-container {
+          border: 1px solid #e2e8f0 !important;
+          border-radius: var(--border-radius-small) !important;
+          margin: 20px 0 !important;
+          overflow: hidden !important;
+        }
+        
+        .swagger-ui .model-title {
+          background: #f8fafc !important;
+          color: #1a202c !important;
+          font-weight: 700 !important;
+          padding: 16px 20px !important;
+          border: none !important;
+          letter-spacing: 0.5px !important;
+        }
+        
+        .swagger-ui .model {
           padding: 20px !important;
-          border: 1px solid #DA020E !important;
+          font-family: 'JetBrains Mono', monospace !important;
+          font-size: 13px !important;
+          line-height: 1.6 !important;
+          color: #1a202c !important;
         }
         
-        .swagger-ui .model-box {
-          background: rgba(255, 215, 0, 0.8) !important;
-          border-radius: 10px !important;
-          padding: 15px !important;
-          border: 1px solid #DA020E !important;
-        }
-        
-        .swagger-ui .response-content-type {
-          border-radius: 8px !important;
-          background: #FFD700 !important;
-          color: #DA020E !important;
+        .swagger-ui pre {
+          background: #f8fafc !important;
+          color: #1a202c !important;
+          padding: 20px !important;
+          border-radius: var(--border-radius-small) !important;
+          font-family: 'JetBrains Mono', monospace !important;
+          font-size: 13px !important;
+          overflow-x: auto !important;
+          border: 1px solid #e2e8f0 !important;
         }
         
         .swagger-ui .highlight-code {
-          border-radius: 8px !important;
-          background: #DA020E !important;
-          color: #FFD700 !important;
+          background: #f8fafc !important;
+          color: #1a202c !important;
         }
         
-        .swagger-ui .curl-command {
-          background: #DA020E !important;
-          color: #FFD700 !important;
-          border-radius: 8px !important;
-          padding: 15px !important;
-          border: 1px solid #FFD700 !important;
-        }
-        
-        /* Scrollbar styling */
-        ::-webkit-scrollbar {
-          width: 8px !important;
-        }
-        
-        ::-webkit-scrollbar-track {
-          background: rgba(255, 215, 0, 0.3) !important;
-          border-radius: 4px !important;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-          background: linear-gradient(135deg, #DA020E 0%, #B8101D 100%) !important;
-          border-radius: 4px !important;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-          background: linear-gradient(135deg, #B8101D 0%, #A00F1B 100%) !important;
-        }
-        
-        /* Mobile responsive */
-        @media (max-width: 768px) {
-          .swagger-ui .wrapper {
-            padding: 10px !important;
-          }
-          
-          .swagger-ui .info {
-            padding: 20px !important;
-          }
-          
-          .swagger-ui .info .title {
-            font-size: 2em !important;
-          }
-        }
-        
-        /* Animation */
-        .swagger-ui .opblock-tag-section {
-          animation: slideInUp 0.5s ease-out !important;
-        }
-        
-        @keyframes slideInUp {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        /* Custom badge styles */
-        .swagger-ui .info .description span[style*="background"] {
-          display: inline-block !important;
-          margin: 5px !important;
-          font-weight: 500 !important;
-          background: #DA020E !important;
-          color: #FFD700 !important;
-          text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3) !important;
-          box-shadow: 0 2px 8px rgba(218, 2, 14, 0.3) !important;
-          transition: all 0.3s ease !important;
-          border: 1px solid #FFD700 !important;
-        }
-        
-        .swagger-ui .info .description span[style*="background"]:hover {
-          transform: translateY(-2px) !important;
-          box-shadow: 0 4px 12px rgba(218, 2, 14, 0.4) !important;
-        }
-        
-        /* Status codes styling */
-        .swagger-ui .response-col_status {
-          color: #DA020E !important;
-          font-weight: bold !important;
-        }
-        
-        /* Method badges */
-        .swagger-ui .opblock-summary-method {
-          background: #DA020E !important;
-          color: #FFD700 !important;
-          border: 1px solid #FFD700 !important;
-          text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3) !important;
-        }
-        
-        /* Authorization modal */
-        .swagger-ui .modal-ux {
-          background: rgba(218, 2, 14, 0.9) !important;
-        }
-        
-        .swagger-ui .modal-ux-content {
-          background: #FFD700 !important;
-          border: 2px solid #DA020E !important;
-          color: #DA020E !important;
-        }
-        
-        /* Input fields */
         .swagger-ui input[type="text"], 
         .swagger-ui input[type="password"], 
-        .swagger-ui textarea {
-          background: #FFD700 !important;
-          border: 1px solid #DA020E !important;
-          color: #DA020E !important;
+        .swagger-ui textarea, 
+        .swagger-ui select {
+          border: 2px solid #e2e8f0 !important;
+          border-radius: var(--border-radius-small) !important;
+          padding: 12px 16px !important;
+          font-size: 14px !important;
+          color: #1a202c !important;
+          font-family: 'Inter', sans-serif !important;
+          transition: var(--transition) !important;
         }
         
         .swagger-ui input[type="text"]:focus, 
         .swagger-ui input[type="password"]:focus, 
-        .swagger-ui textarea:focus {
-          border-color: #DA020E !important;
-          box-shadow: 0 0 0 2px rgba(218, 2, 14, 0.2) !important;
+        .swagger-ui textarea:focus, 
+        .swagger-ui select:focus {
+          outline: none !important;
+          border-color: #10b981 !important;
+          transform: translateY(-1px) !important;
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15) !important;
+        }
+        
+        .swagger-ui .response {
+          margin-bottom: 20px !important;
+          padding: 16px !important;
+          background: white !important;
+          border-left: 4px solid #10b981 !important;
+          border: 1px solid #e2e8f0 !important;
+        }
+        
+        .swagger-ui .response-col_status {
+          font-family: 'JetBrains Mono', monospace !important;
+          font-weight: 700 !important;
+          color: #10b981 !important;    
+          padding: 4px 8px !important;   
+          font-size: 12px !important;
+        }
+        
+        .swagger-ui .response-col_description {
+          color: #4a5568 !important;
+        }
+        
+        /* Schema Model */
+        .swagger-ui .model-box {
+          border: 1px solid #e2e8f0 !important;
+          border-radius: var(--border-radius-small) !important;
+          padding: 20px !important;
+        }
+        
+        .swagger-ui .model-box .model-title {
+          background: transparent !important;
+          color: #1a202c !important;
+          font-weight: 700 !important;
+          font-size: 16px !important;
+          margin-bottom: 16px !important;
+          padding: 0 !important;
+        }
+        
+        .swagger-ui .model-box .model {
+          color: #1a202c !important;
+          padding: 0 !important;
+        }
+        
+        /* Schema properties */
+        .swagger-ui .prop-type {
+          color: #10b981 !important;
+          font-family: 'JetBrains Mono', monospace !important;
+        }
+        
+        .swagger-ui .prop-name {
+          color: #1a202c !important;
+          font-weight: 600 !important;
+        }
+        
+        .swagger-ui .prop-format {
+          color: #64748b !important;
+          font-style: italic !important;
+        }
+        
+        /* Tabs */
+        .swagger-ui .tab {
+          border: 1px solid #e2e8f0 !important;
+          border-bottom: none !important;
+          color: #64748b !important;
+          padding: 12px 20px !important;
+          cursor: pointer !important;
+          font-size: 14px !important;
+          font-weight: 600 !important;
+          transition: var(--transition) !important;
+          font-family: 'Inter', sans-serif !important;
+          letter-spacing: 0.5px !important;
+        }
+        
+        .swagger-ui .tab.active {
+          color: #1a202c !important;
+          border-color: #10b981 !important;
+          border-bottom-color: white !important;
+          transform: translateY(-2px) !important;
+        }
+        
+        .swagger-ui .tab:hover:not(.active) {
+          background: rgba(102, 126, 234, 0.1) !important;
+          color: #667eea !important;
+          transform: translateY(-1px) !important;
+        }
+        
+        .swagger-ui .tabpanel {
+          border: 1px solid #e2e8f0 !important;
+          border-radius: 0 var(--border-radius-small) var(--border-radius-small) var(--border-radius-small) !important;
+          padding: 24px !important;
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+          width: 8px !important;
+          height: 8px !important;
+        }
+        
+        ::-webkit-scrollbar-track {
+          background: rgba(0, 0, 0, 0.05) !important;
+          border-radius: 4px !important;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+          background: #10b981 !important;
+          border-radius: 4px !important;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+          background: #059669 !important;
+        }
+        
+        /* Loading animations */
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+        
+        @keyframes slideInUp {
+          from {
+            transform: translateY(20px);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+        
+        .swagger-ui .opblock-tag {
+          animation: slideInUp 0.5s ease-out !important;
+        }
+        
+        /* Override any dark backgrounds */
+        .swagger-ui,
+        .swagger-ui *,
+        .swagger-ui .wrapper,
+        .swagger-ui .info,
+        .swagger-ui .scheme-container,
+        .swagger-ui .servers,
+        .swagger-ui .auth-wrapper,
+        .swagger-ui .auth-container,
+        .swagger-ui .opblock-tag,
+        .swagger-ui .opblock-tag-section,
+        .swagger-ui .opblock-section-header,
+        .swagger-ui .parameters-container,
+        .swagger-ui .responses-wrapper,
+        .swagger-ui .tabpanel,
+        .swagger-ui .model-container,
+        .swagger-ui .model-box {
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+          .swagger-ui .wrapper {
+            padding: 16px !important;
+          }
+          
+          .swagger-ui .info .title {
+            font-size: 32px !important;
+          }
+          
+          .swagger-ui .topbar .topbar-wrapper {
+            padding: 0 16px !important;
+          }
+          
+          .swagger-ui .opblock-summary {
+            padding: 16px !important;
+          }
         }
       `,
     });
@@ -523,18 +781,19 @@ async function bootstrap() {
     const host = configService.get('app.host') || '0.0.0.0';
 
     await app.listen(port, host);
-    console.log('\x1b[93m🌟 SMARTCHAT API SERVER 🌟\x1b[0m');
-    console.log('='.repeat(70));
-    console.log(`\x1b[92m📡 Server Status    :\x1b[0m ONLINE & READY`);
-    console.log(`\x1b[94m🔗 API Endpoint     :\x1b[0m http://${host}:${port}`);
-    console.log(`\x1b[96m📖 Documentation   :\x1b[0m http://${host}:${port}/ambatukam`);
-    console.log(`\x1b[95m🎯 API v1 Endpoints :\x1b[0m http://${host}:${port}/api/v1`);
-    console.log(`\x1b[93m⚡ Environment     :\x1b[0m ${configService.get('app.environment') || 'development'}`);
-    console.log(`\x1b[91m🔒 Rate Limiting   :\x1b[0m ${configService.get('app.rateLimit.max')} req/${configService.get('app.rateLimit.windowMs') / 1000 / 60}min`);
-    console.log(`\x1b[96m💾 Redis Cache     :\x1b[0m ${configService.get('app.redis.host')}:${configService.get('app.redis.port')}`);
-    console.log(`\x1b[90m🕒 Started at      :\x1b[0m ${new Date().toLocaleString()}`);
-    console.log('='.repeat(70));
-    console.log('\x1b[92m✨ Ready to serve intelligent conversations ✨\x1b[0m\n');
+    console.log('\x1b[36m╔══════════════════════════════════════════════════════════════════════╗\x1b[0m');
+    console.log('\x1b[36m║                        \x1b[1mSmartChat API Server\x1b[0m\x1b[36m                        ║\x1b[0m');
+    console.log('\x1b[36m╠══════════════════════════════════════════════════════════════════════╣\x1b[0m');
+    console.log('\x1b[36m║\x1b[0m \x1b[32m📡 Status:\x1b[0m          ONLINE & READY                                    \x1b[36m║\x1b[0m');
+    console.log(`\x1b[36m║\x1b[0m \x1b[34m🔗 API Endpoint:\x1b[0m    http://${host}:${port}                          \x1b[36m║\x1b[0m`);
+    console.log(`\x1b[36m║\x1b[0m \x1b[35m📖 Documentation:\x1b[0m  http://${host}:${port}/swagger-ui               \x1b[36m║\x1b[0m`);
+    console.log(`\x1b[36m║\x1b[0m \x1b[33m🎯 API v1:\x1b[0m         http://${host}:${port}/api/v1                   \x1b[36m║\x1b[0m`);
+    console.log(`\x1b[36m║\x1b[0m \x1b[36m⚡ Environment:\x1b[0m     ${(configService.get('app.environment') || 'development').toUpperCase().padEnd(43)}\x1b[36m║\x1b[0m`);
+    console.log(`\x1b[36m║\x1b[0m \x1b[31m🛡️  Rate Limit:\x1b[0m     ${configService.get('app.rateLimit.max')} req/${Math.floor(configService.get('app.rateLimit.windowMs') / 1000 / 60)}min                              \x1b[36m║\x1b[0m`);
+    console.log(`\x1b[36m║\x1b[0m \x1b[37m💾 Redis Cache:\x1b[0m     ${configService.get('app.redis.host')}:${configService.get('app.redis.port')}                            \x1b[36m║\x1b[0m`);
+    console.log(`\x1b[36m║\x1b[0m \x1b[90m🕒 Started at:\x1b[0m      ${new Date().toLocaleString().padEnd(41)}  \x1b[36m║\x1b[0m`);
+    console.log('\x1b[36m╚══════════════════════════════════════════════════════════════════════╝\x1b[0m');
+    console.log('\x1b[32m✨ Ready to serve intelligent conversations! ✨\x1b[0m\n');
   } catch (error) {
     console.error('Failed to start application:', error);
     throw error;

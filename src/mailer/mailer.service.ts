@@ -16,18 +16,8 @@ export class MailerService {
     const mailPort = this.configService.get('app.mail.port') || 587;
     const mailSecure = this.configService.get('app.mail.secure') || false;
 
-    console.log('MailerService config:', {
-      host: mailHost,
-      port: mailPort,
-      secure: mailSecure,
-      user: mailUser,
-      hasPassword: !!mailPassword,
-    });
-
     // Check if credentials are provided
     if (!mailUser || !mailPassword) {
-      console.warn('⚠️ Mail credentials not provided. Email functionality will be disabled.');
-      console.warn('To enable email, set MAIL_USER and MAIL_PASSWORD environment variables.');
       this.transporter = null;
       return;
     }
@@ -53,13 +43,10 @@ export class MailerService {
   private async testConnection() {
     try {
       if (!this.transporter) {
-        console.log('⚠️ Skipping SMTP connection test - no credentials provided');
         return;
       }
 
-      console.log('Testing SMTP connection...');
       await this.transporter.verify();
-      console.log('✅ SMTP connection successful');
     } catch (error) {
       console.error('❌ SMTP connection failed:', error);
       console.error('Error details:', {
@@ -79,27 +66,15 @@ export class MailerService {
   }): Promise<any> {
     try {
       if (!this.transporter) {
-        console.warn('⚠️ Cannot send email - transporter not initialized (missing credentials)');
         throw new Error('Email service not configured - missing credentials');
       }
-
-      console.log('=== MAILER SERVICE SEND START ===');
-      console.log('Sending email with options:', {
-        to: mailOptions.to,
-        subject: mailOptions.subject,
-        templatePath: mailOptions.templatePath,
-        hasContext: !!mailOptions.context,
-        hasHtml: !!mailOptions.html,
-      });
 
       // Read and compile template
       let html = '';
       if (mailOptions.templatePath && !mailOptions.html) {
-        console.log('Reading template file:', mailOptions.templatePath);
         const templateContent = await readFile(mailOptions.templatePath, 'utf-8');
         const template = Handlebars.compile(templateContent);
         html = template(mailOptions.context);
-        console.log('Template compiled successfully');
       }
 
       const emailOptions = {
@@ -109,18 +84,7 @@ export class MailerService {
         html: mailOptions.html ? mailOptions.html : html,
       };
 
-      console.log('Final email options:', {
-        to: emailOptions.to,
-        subject: emailOptions.subject,
-        from: emailOptions.from,
-        hasHtml: !!emailOptions.html,
-      });
-
-      console.log('Sending email via transporter...');
       const result = await this.transporter.sendMail(emailOptions);
-      console.log('Email result:', result);
-
-      console.log('=== MAILER SERVICE SEND END ===');
       return result;
     } catch (error) {
       console.error('Error in MailerService.sendMail:', error);

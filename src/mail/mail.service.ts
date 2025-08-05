@@ -13,28 +13,18 @@ export class MailService {
   ) { }
 
   async userSignUp(mailData: MailData<{ hash: string }>): Promise<void> {
-    console.log('=== MAIL SERVICE USER SIGNUP START ===');
-    console.log('MailService.userSignUp called with:', {
-      to: mailData.to,
-      hash: mailData.data.hash,
-    });
-
     try {
       const emailConfirmTitle = 'Confirm Email';
       const text1 = 'Please confirm your email address by clicking the button below:';
       const text2 = 'If you did not create an account, no further action is required.';
       const text3 = 'Thank you for using our service!';
 
-      console.log('Getting frontend domain...');
       const frontendDomain = this.configService.getOrThrow('app.frontendDomain', {
         infer: true,
       });
-      console.log('Frontend domain:', frontendDomain);
 
       const url = new URL(frontendDomain + '/confirm-email');
       url.searchParams.set('hash', mailData.data.hash);
-
-      console.log('Verification URL:', url.toString());
 
       const templatePath = path.join(
         process.cwd(),
@@ -43,10 +33,6 @@ export class MailService {
         'mail-templates',
         'activation.hbs',
       );
-      console.log('Template path:', templatePath);
-
-      console.log('Calling MailerService.sendMail...');
-      console.log('MailerService instance:', !!this.mailerService);
 
       await this.mailerService.sendMail({
         to: mailData.to,
@@ -62,15 +48,7 @@ export class MailService {
           text3,
         },
       });
-
-      console.log('✅ MailService.userSignUp completed successfully');
-      console.log('=== MAIL SERVICE USER SIGNUP END ===');
     } catch (error) {
-      console.error('❌ Error in MailService.userSignUp:', error);
-      console.error('Error details:', {
-        message: error.message,
-        stack: error.stack,
-      });
       throw error;
     }
   }

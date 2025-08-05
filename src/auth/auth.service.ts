@@ -41,47 +41,26 @@ export class AuthService {
     }
 
     async register(userData: any) {
-        console.log('=== AUTH SERVICE REGISTER START ===');
-        console.log('AuthService.register called with:', {
-            email: userData.email,
-            username: userData.username,
-        });
-
         try {
-            // Create user
-            console.log('Creating user...');
             const user = await this.userService.createUser(userData);
-            console.log('User created successfully:', {
-                id: user.id,
-                email: user.email,
-                username: user.username,
-            });
 
             // Generate verification hash
-            console.log('Generating verification hash...');
             const verificationHash = randomBytes(32).toString('hex');
-            console.log('Generated verification hash:', verificationHash);
 
             // Save verification hash to database
-            console.log('Saving verification hash to database...');
             await this.userService.updateUser(user.id, {
                 hash: verificationHash,
                 hashExpires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
             });
-            console.log('✅ Verification hash saved to database');
 
             // Send verification email
             try {
-                console.log('Attempting to send verification email to:', user.email);
-                console.log('MailService instance:', !!this.mailService);
-
                 await this.mailService.userSignUp({
                     to: user.email,
                     data: {
                         hash: verificationHash,
                     },
                 });
-                console.log('✅ Verification email sent successfully');
             } catch (error) {
                 console.error('❌ Failed to send verification email:', error);
                 console.error('Error details:', {
@@ -92,7 +71,6 @@ export class AuthService {
                 // In production, you might want to queue this for retry
             }
 
-            console.log('=== AUTH SERVICE REGISTER END ===');
             return {
                 message: 'Registration successful. Please check your email to verify your account.',
                 user: {
@@ -253,39 +231,29 @@ export class AuthService {
     }
 
     async verifyEmail(hash: string) {
-        console.log('=== AUTH SERVICE VERIFY EMAIL START ===');
-        console.log('Verifying email with hash:', hash);
-
         if (!hash) {
             throw new BadRequestException('Verification hash is required');
         }
 
         try {
             // Find user by verification hash
-            console.log('Looking for user with verification hash...');
             const user = await this.userService.findUserByVerificationHash(hash);
 
             if (!user) {
-                console.log('❌ No user found with verification hash');
                 throw new BadRequestException('Invalid verification hash');
             }
 
             // Check if hash has expired
             if (user.hashExpires && user.hashExpires < new Date()) {
-                console.log('❌ Verification hash has expired');
                 throw new BadRequestException('Verification hash has expired');
             }
 
             // Update user verification status
-            console.log('Updating user verification status...');
             await this.userService.updateUser(user.id, {
                 isVerified: true,
                 hash: undefined,
                 hashExpires: undefined,
             });
-
-            console.log('✅ Email verification successful');
-            console.log('=== AUTH SERVICE VERIFY EMAIL END ===');
 
             return {
                 message: 'Email verified successfully',
@@ -298,7 +266,6 @@ export class AuthService {
                 },
             };
         } catch (error) {
-            console.error('❌ Error in verifyEmail:', error);
             if (error instanceof BadRequestException) {
                 throw error;
             }
@@ -328,7 +295,6 @@ export class AuthService {
                 },
             });
         } catch (error) {
-            console.error('Failed to send verification email:', error);
             throw new Error('Failed to send verification email');
         }
 
