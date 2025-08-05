@@ -117,7 +117,7 @@ async function bootstrap() {
         'JWT-auth',
       )
       .addServer('http://localhost:51213', 'Development Server')
-      .addServer('https://api.smartchat.com', 'Production Server')
+      .addServer('https://restapi-social-media-conversation.onrender.com', 'Production Server')
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
