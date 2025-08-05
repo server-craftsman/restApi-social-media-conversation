@@ -60,4 +60,4 @@ USER nestjs
 EXPOSE 51213
 
 # Start production server
-CMD ["sh", "-c", "chmod +x node dist/main"]
+CMD ["node", "dist/main"]

@@ -13,6 +13,7 @@ import { RedisModule } from './common/modules/redis.module';
 import { RateLimitGuard } from './common/guards/rate-limit.guard';
 import { CacheInterceptor } from './common/interceptors/cache.interceptor';
 import { ApiResponseInterceptor } from './common/interceptors/api-response.interceptor';
+import { HealthModule } from './health/health.module';
 import appConfig from './config/app.config';
 
 @Module({
@@ -51,6 +52,7 @@ import appConfig from './config/app.config';
     // Feature Modules
     AuthModule,
     UserModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [

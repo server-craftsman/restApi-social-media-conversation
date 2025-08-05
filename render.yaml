@@ -1,0 +1,84 @@
+services:
+  # PostgreSQL Database
+  - type: pserv
+    name: smartchat-postgres
+    env: docker
+    plan: free
+    dockerfilePath: ./docker/postgres.Dockerfile
+    envVars:
+      - key: POSTGRES_DB
+        value: smartchat_db
+      - key: POSTGRES_USER
+        value: postgres
+      - key: POSTGRES_PASSWORD
+        generateValue: true
+
+  # Redis Cache
+  - type: redis
+    name: smartchat-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru
+
+  # Main API Application
+  - type: web
+    name: smartchat-api
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile.prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 51213
+      - key: DATABASE_HOST
+        fromService:
+          type: pserv
+          name: smartchat-postgres
+          property: host
+      - key: DATABASE_PORT
+        fromService:
+          type: pserv
+          name: smartchat-postgres
+          property: port
+      - key: DATABASE_USERNAME
+        value: postgres
+      - key: DATABASE_PASSWORD
+        fromService:
+          type: pserv
+          name: smartchat-postgres
+          property: password
+      - key: DATABASE_NAME
+        value: smartchat_db
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: smartchat-postgres
+          property: connectionString
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: smartchat-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: smartchat-redis
+          property: port
+      - key: REDIS_PASSWORD
+        fromService:
+          type: redis
+          name: smartchat-redis
+          property: password
+      - key: AUTH_JWT_SECRET
+        generateValue: true
+      - key: AUTH_REFRESH_SECRET
+        generateValue: true
+      - key: AUTH_FORGOT_SECRET
+        generateValue: true
+      - key: AUTH_CONFIRM_EMAIL_SECRET
+        generateValue: true
+      - key: ALLOWED_ORIGINS
+        value: "*"
+      - key: APP_HOST
+        value: "0.0.0.0"
+    healthCheckPath: /health 
