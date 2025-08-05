@@ -16,6 +16,10 @@ RUN pnpm install --frozen-lockfile
 # Copy Prisma schema first
 COPY prisma ./prisma/
 
+# Copy scripts for debugging
+COPY scripts ./scripts/
+RUN chmod +x scripts/*.sh
+
 # Generate Prisma client BEFORE copying source code
 RUN pnpm prisma generate
 
@@ -60,12 +64,12 @@ RUN addgroup -g 1001 -S nodejs && \
 RUN chown -R nestjs:nodejs /app
 USER nestjs
 
-# Expose port
+# Expose port (Render expects this port)
 EXPOSE 51213
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:51213/health || exit 1
 
-# Start production server
-CMD ["node", "dist/main"]
+# Start production server with debug
+CMD ["sh", "-c", "echo '=== DOCKER RUNTIME DEBUG ===' && scripts/debug-env.sh && echo '=== STARTING APP ===' && node dist/main"]

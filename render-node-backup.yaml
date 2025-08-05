@@ -11,17 +11,18 @@ services:
     plan: free
     maxmemoryPolicy: allkeys-lru
 
-  # Main API Application (Docker)
+  # Main API Application
   - type: web
     name: smartchat-api
-    env: docker
+    env: node
     plan: free
-    dockerfilePath: ./Dockerfile.prod
+    buildCommand: chmod +x scripts/debug-env.sh && scripts/debug-env.sh && pnpm install --frozen-lockfile && pnpm prisma generate && pnpm prisma migrate deploy && pnpm run build
+    startCommand: chmod +x scripts/debug-env.sh && echo "=== RUNTIME DEBUG ===" && scripts/debug-env.sh && echo "=== STARTING APP ===" && pnpm run start:prod
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 51213
+        value: 10000
       - key: DATABASE_HOST
         fromService:
           type: pserv
