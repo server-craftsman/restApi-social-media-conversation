@@ -1,17 +1,9 @@
 services:
-  # PostgreSQL Database
+  # PostgreSQL Database (Managed Service)
   - type: pserv
     name: smartchat-postgres
-    env: docker
     plan: free
-    dockerfilePath: ./docker/postgres.Dockerfile
-    envVars:
-      - key: POSTGRES_DB
-        value: smartchat_db
-      - key: POSTGRES_USER
-        value: postgres
-      - key: POSTGRES_PASSWORD
-        generateValue: true
+    databaseName: smartchat_db
 
   # Redis Cache
   - type: redis
@@ -22,14 +14,15 @@ services:
   # Main API Application
   - type: web
     name: smartchat-api
-    env: docker
+    env: node
     plan: free
-    dockerfilePath: ./Dockerfile.prod
+    buildCommand: pnpm install --frozen-lockfile && pnpm prisma generate && pnpm run build
+    startCommand: pnpm run start:prod
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 51213
+        value: 10000
       - key: DATABASE_HOST
         fromService:
           type: pserv
@@ -41,14 +34,20 @@ services:
           name: smartchat-postgres
           property: port
       - key: DATABASE_USERNAME
-        value: postgres
+        fromService:
+          type: pserv
+          name: smartchat-postgres
+          property: user
       - key: DATABASE_PASSWORD
         fromService:
           type: pserv
           name: smartchat-postgres
           property: password
       - key: DATABASE_NAME
-        value: smartchat_db
+        fromService:
+          type: pserv
+          name: smartchat-postgres
+          property: database
       - key: DATABASE_URL
         fromService:
           type: pserv
@@ -81,4 +80,12 @@ services:
         value: "*"
       - key: APP_HOST
         value: "0.0.0.0"
+      - key: MAIL_HOST
+        value: smtp.gmail.com
+      - key: MAIL_PORT
+        value: 587
+      - key: MAIL_USER
+        value: huyit2003@gmail.com
+      - key: MAIL_PASSWORD
+        value: tgob nbod eitn grpe
     healthCheckPath: /health 
