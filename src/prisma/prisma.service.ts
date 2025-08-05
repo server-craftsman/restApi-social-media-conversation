@@ -29,6 +29,13 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
                 this.logger.log(`DATABASE_URL value: ${process.env.DATABASE_URL.replace(/\/\/.*:.*@/, '//***:***@')}`);
             }
 
+            // Skip database connection if DATABASE_URL contains localhost in production
+            if (process.env.NODE_ENV === 'production' && process.env.DATABASE_URL?.includes('localhost')) {
+                this.logger.warn('⚠️ Skipping database connection due to localhost URL in production');
+                this.logger.warn('This is likely a configuration issue - the app will run without database');
+                return;
+            }
+
             this.logger.log('Attempting database connection...');
             await this.$connect();
             this.logger.log('✅ Database connected successfully');
@@ -36,6 +43,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
             this.logger.error('❌ Failed to connect to database:');
             this.logger.error(`Error: ${error.message}`);
             this.logger.error('Full error:', error);
+
+            // In production, don't crash the app due to database connection issues
+            if (process.env.NODE_ENV === 'production') {
+                this.logger.warn('⚠️ Database connection failed but continuing in production mode');
+                this.logger.warn('The app will run with limited functionality');
+                return;
+            }
+
             throw error;
         }
     }
