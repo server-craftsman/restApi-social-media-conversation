@@ -147,7 +147,7 @@ async function bootstrap() {
         validatorUrl: null,
       },
       customSiteTitle: 'SmartChat API - Intelligent Chat Platform',
-      customfavIcon: '/favicon.ico',
+      customfavIcon: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzEwYjk4MSI+PHBhdGggZD0iTTIwIDJINGMtMS4xIDAtMiAuOS0yIDJ2MTJjMCAxLjEuOSAyIDIgMmgxNGw0IDRWNGMwLTEuMS0uOS0yLTItMnoiLz48L3N2Zz4=',
       customCss: `
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Poppins:wght@400;500;600;700&display=swap');
         
