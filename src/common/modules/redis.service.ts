@@ -13,16 +13,18 @@ export class RedisService {
         const redisPassword = process.env.REDIS_PASSWORD || this.configService.get('app.redis.password');
         const redisDb = parseInt(process.env.REDIS_DB || '', 10) || this.configService.get('app.redis.db') || 0;
 
-        this.logger.log(`Connecting to Redis at ${redisHost}:${redisPort}`);
-        this.logger.log(`Redis password: ${redisPassword ? 'Set' : 'Not set'}`);
+        this.logger.log(`Redis Environment Debug:`);
+        this.logger.log(`  REDIS_HOST env: ${process.env.REDIS_HOST}`);
+        this.logger.log(`  REDIS_PORT env: ${process.env.REDIS_PORT}`);
+        this.logger.log(`  Config host: ${this.configService.get('app.redis.host')}`);
+        this.logger.log(`  Config port: ${this.configService.get('app.redis.port')}`);
+        this.logger.log(`  Final host: ${redisHost}`);
+        this.logger.log(`  Final port: ${redisPort}`);
+        this.logger.log(`  Redis password: ${redisPassword ? 'Set' : 'Not set'}`);
 
         if (!redisHost || !redisPort) {
-            this.logger.error('Redis configuration incomplete:', {
-                host: redisHost,
-                port: redisPort,
-                REDIS_HOST: process.env.REDIS_HOST,
-                REDIS_PORT: process.env.REDIS_PORT,
-            });
+            this.logger.error('Redis configuration incomplete - will cause connection errors');
+            this.logger.error('This may prevent the app from starting if Redis is required');
         }
 
         this.redis = new Redis({
@@ -31,9 +33,10 @@ export class RedisService {
             password: redisPassword || undefined,
             db: redisDb,
             keyPrefix: this.configService.get('app.redis.keyPrefix') || 'smartchat:',
-            maxRetriesPerRequest: this.configService.get('app.redis.maxRetriesPerRequest') || 1,
-            enableReadyCheck: this.configService.get('app.redis.enableReadyCheck') !== false,
-            connectTimeout: 60000,
+            maxRetriesPerRequest: 1, // Reduced to fail fast
+            enableReadyCheck: false, // Disable to prevent blocking
+            connectTimeout: 10000, // Reduced timeout
+            lazyConnect: true, // Don't connect immediately
         });
 
         this.redis.on('connect', () => {
@@ -42,7 +45,8 @@ export class RedisService {
 
         this.redis.on('error', (error) => {
             this.logger.error('Redis connection error:');
-            this.logger.error(error);
+            this.logger.error(`Error: ${error.message}`);
+            this.logger.error('This error can be ignored if Redis is not critical for basic app functionality');
         });
 
         this.redis.on('ready', () => {

@@ -18,12 +18,24 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
     async onModuleInit() {
         try {
-            this.logger.log('Connecting to database...');
-            this.logger.log(`Using DATABASE_URL: ${process.env.DATABASE_URL ? 'Set' : 'Not set'}`);
+            this.logger.log('=== DATABASE CONNECTION DEBUG ===');
+            this.logger.log(`DATABASE_URL env: ${process.env.DATABASE_URL ? 'Set' : 'Not set'}`);
+            this.logger.log(`DATABASE_HOST env: ${process.env.DATABASE_HOST || 'Not set'}`);
+            this.logger.log(`DATABASE_PORT env: ${process.env.DATABASE_PORT || 'Not set'}`);
+            this.logger.log(`DATABASE_USERNAME env: ${process.env.DATABASE_USERNAME || 'Not set'}`);
+            this.logger.log(`DATABASE_NAME env: ${process.env.DATABASE_NAME || 'Not set'}`);
+
+            if (process.env.DATABASE_URL) {
+                this.logger.log(`DATABASE_URL value: ${process.env.DATABASE_URL.replace(/\/\/.*:.*@/, '//***:***@')}`);
+            }
+
+            this.logger.log('Attempting database connection...');
             await this.$connect();
-            this.logger.log('Database connected successfully');
+            this.logger.log('✅ Database connected successfully');
         } catch (error) {
-            this.logger.error('Failed to connect to database:', error);
+            this.logger.error('❌ Failed to connect to database:');
+            this.logger.error(`Error: ${error.message}`);
+            this.logger.error('Full error:', error);
             throw error;
         }
     }

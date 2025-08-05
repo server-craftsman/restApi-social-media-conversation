@@ -1,6 +1,16 @@
 import { registerAs } from '@nestjs/config';
 
 export default registerAs('app', () => {
+  // Debug environment variables
+  console.log('=== CONFIG DEBUG ===');
+  console.log('NODE_ENV:', process.env.NODE_ENV);
+  console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'Set' : 'Not set');
+  console.log('DATABASE_HOST:', process.env.DATABASE_HOST);
+  console.log('DATABASE_PORT:', process.env.DATABASE_PORT);
+  console.log('REDIS_HOST:', process.env.REDIS_HOST);
+  console.log('REDIS_PORT:', process.env.REDIS_PORT);
+  console.log('PORT:', process.env.PORT);
+
   // Debug CORS configuration
   const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map(origin => origin.trim()) || ['http://localhost:3000'];
 

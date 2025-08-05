@@ -65,10 +65,11 @@ import appConfig from './config/app.config';
       provide: APP_INTERCEPTOR,
       useClass: ApiResponseInterceptor,
     },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: CacheInterceptor,
-    },
+    // Temporarily disabled until Redis connection is stable
+    // {
+    //   provide: APP_INTERCEPTOR,
+    //   useClass: CacheInterceptor,
+    // },
   ],
 })
 export class AppModule { }
