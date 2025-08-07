@@ -22,7 +22,7 @@ model User {
   lastName    String?
   fullName    String?
   avatar      String?
-  phone       String?
+  phone       Int?
   dateOfBirth DateTime?
   gender      Gender?
   bio         String?
@@ -38,34 +38,71 @@ model User {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  // Relations
+  // Chat Relations
   sentMessages     Message[]     @relation("SentMessages")
   chatMembers      ChatMember[]
-  aiChats         AIChat[]
+  aiChats          AIChat[]
+
+  // Social Relations
+  sentFriendRequests     FriendRequest[] @relation("SentFriendRequests")
+  receivedFriendRequests FriendRequest[] @relation("ReceivedFriendRequests")
+  friendships            Friendship[]    @relation("UserFriendships")
+  friendOf               Friendship[]    @relation("FriendOfUser")
+  
+  // Message Features
+  messageReactions MessageReaction[]
+  mentions         MessageMention[]
+  
+  // Stories
+  stories      Story[]
+  storyViews   StoryView[]
+  storyReplies StoryReply[]
+  
+  // Polls
+  createdPolls PollVote[]
+  pollVotes    Poll[]     @relation("PollCreator")
+  
+  // Activity & Status
+  activities   UserActivity[]
+  userStatus   UserStatusHistory[]
 
   @@map("users")
 }
 
 model Chat {
-  id        String   @id @default(cuid())
-  name      String?
-  type      ChatType @default(DIRECT)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String        @id @default(cuid())
+  name          String?
+  description   String?       @db.Text
+  avatar        String?
+  coverImage    String?
+  type          ChatType      @default(DIRECT)
+  groupType     GroupType?    // Only for GROUP chats
+  category      GroupCategory @default(GENERAL)
+  isPublic      Boolean       @default(false)
+  allowAutoJoin Boolean       @default(false)
+  tags          String[]      @default([])
+  lastMessageId String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   // Relations
-  members    ChatMember[]
-  messages   Message[]
+  members         ChatMember[]
+  messages        Message[]
+  lastMessage     Message?        @relation("LastMessage", fields: [lastMessageId], references: [id])
+  settings        ChatSettings?
+  joinRequests    GroupJoinRequest[]
 
   @@map("chats")
 }
 
 model ChatMember {
-  id     String     @id @default(cuid())
-  userId String
-  chatId String
-  role   MemberRole @default(MEMBER)
-  joinedAt DateTime @default(now())
+  id       String     @id @default(cuid())
+  userId   String
+  chatId   String
+  role     MemberRole @default(MEMBER)
+  joinedAt DateTime   @default(now())
+  leftAt   DateTime?
+  isActive Boolean    @default(true)
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -75,22 +112,239 @@ model ChatMember {
   @@map("chat_members")
 }
 
+model ChatSettings {
+  id                String  @id @default(cuid())
+  chatId            String  @unique
+  allowMemberInvite Boolean @default(true)
+  allowMemberPost   Boolean @default(true)
+  moderationEnabled Boolean @default(false)
+  slowModeDelay     Int     @default(0) // seconds
+  maxMembers        Int?
+  joinApprovalRequired Boolean @default(false)
+  
+  // Relations
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@map("chat_settings")
+}
+
 model Message {
-  id        String      @id @default(cuid())
-  content   String
-  type      MessageType @default(TEXT)
-  senderId  String
-  chatId    String
-  isRead    Boolean     @default(false)
-  createdAt DateTime    @default(now())
+  id               String            @id @default(cuid())
+  content          String            @db.Text
+  type             MessageType       @default(TEXT)
+  senderId         String
+  chatId           String
+  replyToMessageId String?
+  mediaUrl         String?
+  metadata         Json?
+  mentions         String[]          @default([]) // User IDs
+  hashtags         String[]          @default([])
+  isRead           Boolean           @default(false)
+  isEdited         Boolean           @default(false)
+  isDeleted        Boolean           @default(false)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 
   // Relations
-  sender User   @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  chat   Chat  @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender           User              @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  chat             Chat              @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  replyToMessage   Message?          @relation("MessageReplies", fields: [replyToMessageId], references: [id])
+  replies          Message[]         @relation("MessageReplies")
+  reactions        MessageReaction[]
+  mentionedUsers   MessageMention[]
+  poll             Poll?
+  lastMessageChats Chat[]            @relation("LastMessage")
 
   @@map("messages")
 }
 
+model MessageReaction {
+  id        String      @id @default(cuid())
+  messageId String
+  userId    String
+  type      ReactionType
+  createdAt DateTime    @default(now())
+
+  // Relations
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@map("message_reactions")
+}
+
+model MessageMention {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  // Relations
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@map("message_mentions")
+}
+
+model Poll {
+  id                  String     @id @default(cuid())
+  messageId           String     @unique
+  creatorId           String
+  question            String
+  options             String[]
+  allowMultipleChoice Boolean    @default(false)
+  expiresAt           DateTime?
+  isActive            Boolean    @default(true)
+  createdAt           DateTime   @default(now())
+
+  // Relations
+  message Message    @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  creator User       @relation("PollCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  votes   PollVote[]
+
+  @@map("polls")
+}
+
+model PollVote {
+  id        String   @id @default(cuid())
+  pollId    String
+  userId    String
+  options   Int[]    // indices of selected options
+  createdAt DateTime @default(now())
+
+  // Relations
+  poll Poll @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([pollId, userId])
+  @@map("poll_votes")
+}
+
+model FriendRequest {
+  id          String              @id @default(cuid())
+  senderId    String
+  receiverId  String
+  message     String?
+  status      FriendRequestStatus @default(PENDING)
+  createdAt   DateTime            @default(now())
+  respondedAt DateTime?
+
+  // Relations
+  sender   User @relation("SentFriendRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ReceivedFriendRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])
+  @@map("friend_requests")
+}
+
+model Friendship {
+  id        String           @id @default(cuid())
+  userId    String
+  friendId  String
+  status    FriendshipStatus @default(ACTIVE)
+  createdAt DateTime         @default(now())
+
+  // Relations
+  user   User @relation("UserFriendships", fields: [userId], references: [id], onDelete: Cascade)
+  friend User @relation("FriendOfUser", fields: [friendId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, friendId])
+  @@map("friendships")
+}
+
+model Story {
+  id                    String        @id @default(cuid())
+  userId                String
+  content               String
+  mediaUrl              String?
+  mediaType             MediaType?
+  allowReplies          StoryReplyType @default(FRIENDS)
+  expiresAt             DateTime
+  createdAt             DateTime      @default(now())
+
+  // Relations
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  views   StoryView[]
+  replies StoryReply[]
+
+  @@map("stories")
+}
+
+model StoryView {
+  id        String   @id @default(cuid())
+  storyId   String
+  userId    String
+  viewedAt  DateTime @default(now())
+
+  // Relations
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, userId])
+  @@map("story_views")
+}
+
+model StoryReply {
+  id        String   @id @default(cuid())
+  storyId   String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  // Relations
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("story_replies")
+}
+
+model GroupJoinRequest {
+  id        String                 @id @default(cuid())
+  groupId   String
+  userId    String
+  message   String?
+  status    GroupJoinRequestStatus @default(PENDING)
+  createdAt DateTime               @default(now())
+
+  // Relations
+  group Chat @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@map("group_join_requests")
+}
+
+model UserActivity {
+  id        String       @id @default(cuid())
+  userId    String
+  activity  ActivityType
+  chatId    String?
+  details   String?
+  createdAt DateTime     @default(now())
+  expiresAt DateTime?
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_activities")
+}
+
+model UserStatusHistory {
+  id            String     @id @default(cuid())
+  userId        String
+  status        StatusType
+  customMessage String?
+  emoji         String?
+  createdAt     DateTime   @default(now())
+  expiresAt     DateTime?
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_status_history")
+}
+
+// AI Chat models (keep existing)
 model AIChat {
   id        String   @id @default(cuid())
   userId    String
@@ -118,6 +372,8 @@ model AIMessage {
   @@map("ai_messages")
 }
 
+// ==================== ENUMS ====================
+
 enum UserStatus {
   ONLINE
   OFFLINE
@@ -143,18 +399,98 @@ enum ChatType {
   GROUP
 }
 
+enum GroupType {
+  PUBLIC
+  PRIVATE
+  SECRET
+}
+
+enum GroupCategory {
+  GENERAL
+  GAMING
+  TECHNOLOGY
+  ENTERTAINMENT
+  SPORTS
+  EDUCATION
+  BUSINESS
+  LIFESTYLE
+}
+
 enum MemberRole {
   OWNER
   ADMIN
+  MODERATOR
   MEMBER
 }
 
 enum MessageType {
   TEXT
   IMAGE
-  FILE
-  AUDIO
   VIDEO
+  AUDIO
+  FILE
+  STICKER
+  GIF
+  LOCATION
+  POLL
+  SYSTEM
+}
+
+enum ReactionType {
+  LIKE
+  LOVE
+  HAHA
+  WOW
+  SAD
+  ANGRY
+  CARE
+}
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  BLOCKED
+}
+
+enum FriendshipStatus {
+  ACTIVE
+  BLOCKED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum StoryReplyType {
+  EVERYONE
+  FRIENDS
+  CLOSE_FRIENDS
+  NO_ONE
+}
+
+enum GroupJoinRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ActivityType {
+  ONLINE
+  TYPING
+  RECORDING
+  UPLOADING
+  PLAYING
+  LISTENING
+}
+
+enum StatusType {
+  AVAILABLE
+  BUSY
+  AWAY
+  INVISIBLE
+  CUSTOM
 }
 
 enum AIRole {

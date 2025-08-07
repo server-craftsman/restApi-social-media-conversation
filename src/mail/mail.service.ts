@@ -19,9 +19,9 @@ export class MailService {
       const text2 = 'If you did not create an account, no further action is required.';
       const text3 = 'Thank you for using our service!';
 
-      const frontendDomain = this.configService.getOrThrow('app.frontendDomain', {
+      const frontendDomain = this.configService.get('app.frontendDomain', {
         infer: true,
-      });
+      }) || 'http://localhost:3000';
 
       const url = new URL(frontendDomain + '/confirm-email');
       url.searchParams.set('hash', mailData.data.hash);
@@ -62,11 +62,11 @@ export class MailService {
     const text3 = 'If you did not request a password reset, no further action is required.';
     const text4 = 'This password reset link will expire in 60 minutes.';
 
-    const url = new URL(
-      this.configService.getOrThrow('app.frontendDomain', {
-        infer: true,
-      }) + '/password-change',
-    );
+    const frontendDomain = this.configService.get('app.frontendDomain', {
+      infer: true,
+    }) || 'http://localhost:3000';
+
+    const url = new URL(frontendDomain + '/password-change');
     url.searchParams.set('hash', mailData.data.hash);
     url.searchParams.set('expires', mailData.data.tokenExpires.toString());
 
@@ -101,11 +101,11 @@ export class MailService {
     const text2 = 'If you did not request this change, no further action is required.';
     const text3 = 'Thank you for using our service!';
 
-    const url = new URL(
-      this.configService.getOrThrow('app.frontendDomain', {
-        infer: true,
-      }) + '/confirm-new-email',
-    );
+    const frontendDomain = this.configService.get('app.frontendDomain', {
+      infer: true,
+    }) || 'http://localhost:3000';
+
+    const url = new URL(frontendDomain + '/confirm-new-email');
     url.searchParams.set('hash', mailData.data.hash);
 
     await this.mailerService.sendMail({
@@ -122,7 +122,9 @@ export class MailService {
         title: emailConfirmTitle,
         url: url.toString(),
         actionTitle: emailConfirmTitle,
-        app_name: this.configService.get('app.name', { infer: true }),
+        app_name: this.configService.get('app.name', {
+          infer: true,
+        }),
         text1,
         text2,
         text3,

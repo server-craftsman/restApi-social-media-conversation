@@ -9,7 +9,7 @@ export interface IUser {
     lastName?: string;
     fullName?: string;
     avatar?: string;
-    phone?: string;
+    phone?: number;
     dateOfBirth?: Date;
     gender?: 'MALE' | 'FEMALE' | 'OTHER';
     bio?: string;
@@ -33,7 +33,7 @@ export interface ICreateUser {
     firstName?: string;
     lastName?: string;
     avatar?: string;
-    phone?: string;
+    phone?: number;
     dateOfBirth?: Date;
     gender?: 'MALE' | 'FEMALE' | 'OTHER';
     bio?: string;
@@ -48,7 +48,7 @@ export interface IUpdateUser {
     firstName?: string;
     lastName?: string;
     avatar?: string;
-    phone?: string;
+    phone?: number;
     dateOfBirth?: Date;
     gender?: 'MALE' | 'FEMALE' | 'OTHER';
     bio?: string;

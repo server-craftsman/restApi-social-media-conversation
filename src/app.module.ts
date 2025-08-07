@@ -4,17 +4,19 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { RateLimitGuard } from './common/guards/rate-limit.guard';
+import { CacheInterceptor } from './common/interceptors/cache.interceptor';
+import { ApiResponseInterceptor } from './common/interceptors/api-response.interceptor';
+import { HealthModule } from './health/health.module';
+import appConfig from './config/app.config';
+//==============MODULES==============
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { MailModule } from './mail/mail.module';
 import { MailerModule } from './mailer/mailer.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './common/modules/redis.module';
-import { RateLimitGuard } from './common/guards/rate-limit.guard';
-import { CacheInterceptor } from './common/interceptors/cache.interceptor';
-import { ApiResponseInterceptor } from './common/interceptors/api-response.interceptor';
-import { HealthModule } from './health/health.module';
-import appConfig from './config/app.config';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -53,6 +55,7 @@ import appConfig from './config/app.config';
     AuthModule,
     UserModule,
     HealthModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [

@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsEmail, IsEnum, IsDateString, IsUrl, IsPhoneNumber } from 'class-validator';
+import { IsOptional, IsString, IsEmail, IsEnum, IsDateString, IsUrl, IsNumber, IsPositive } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRole } from '../domain/interfaces/user.interface';
 
@@ -42,12 +42,13 @@ export class UpdateUserDto {
 
     @ApiPropertyOptional({
         description: 'Số điện thoại',
-        example: '+84123456789',
-        type: String,
+        example: 84123456789,
+        type: Number,
     })
     @IsOptional()
-    @IsPhoneNumber()
-    phone?: string;
+    @IsNumber()
+    @IsPositive()
+    phone?: number;
 
     @ApiPropertyOptional({
         description: 'Ngày sinh',

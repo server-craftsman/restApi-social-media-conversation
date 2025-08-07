@@ -9,7 +9,7 @@ export class User implements IUser {
     lastName?: string;
     fullName?: string;
     avatar?: string;
-    phone?: string;
+    phone?: number;
     dateOfBirth?: Date;
     gender?: 'MALE' | 'FEMALE' | 'OTHER';
     bio?: string;
